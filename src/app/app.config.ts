@@ -19,18 +19,15 @@ export const appConfig: ApplicationConfig = {
         provideZoneChangeDetection({ eventCoalescing: true }),
         provideHttpClient(),
         provideRouter(routes),
-        provideFirebaseApp(() =>
-            initializeApp({
-                projectId: 'join-mmc',
-                appId: '1:743995687615:web:112ab39b5754a8ca7bfc0a',
-                storageBucket: 'join-mmc.firebasestorage.app',
-                apiKey: 'AIzaSyAAX2A5vEX7JJbae6szFNRiLN6-U7aRaXI',
-                authDomain: 'join-mmc.firebaseapp.com',
-                messagingSenderId: '743995687615',
-                measurementId: 'G-Y0RYN7K0JQ',
-            })
-        ),
-        provideAuth(() => getAuth()),
-        provideFirestore(() => getFirestore()),
+        provideFirestore(() => getFirestore()), provideFirebaseApp(() => 
+            initializeApp({ 
+                projectId: "join-6a1df", 
+                appId: "1:685974552421:web:5f11617123c57f3ed12b8c", 
+                storageBucket: "join-6a1df.firebasestorage.app", 
+                apiKey: "AIzaSyBImEhp4RPrawZLLp6lLsVHua5qxIK0bNg", 
+                authDomain: "join-6a1df.firebaseapp.com", 
+                messagingSenderId: "685974552421",
+            })), 
+        provideAuth(() => getAuth()), provideFirestore(() => getFirestore()),
     ],
 };
