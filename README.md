@@ -1,5 +1,7 @@
 [![Build and deploy](https://github.com/Loqicx/join/actions/workflows/main.yml/badge.svg)](https://github.com/Loqicx/join/actions/workflows/main.yml)
 
+# WIP Project, replace Firebase through Django Rest Framework API Backend
+
 # Join
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.3.
