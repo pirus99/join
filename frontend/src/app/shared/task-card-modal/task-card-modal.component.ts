@@ -126,10 +126,9 @@ export class TaskCardModalComponent implements OnInit {
    * @returns {string} Path to the priority icon.
    */
   taskPriority(): string {
-    console.log('Task Priority:', this.task.priority);
-    if (this.task.priority === 1) return this.priorities.low;
-    if (this.task.priority === 2) return this.priorities.medium;
-    if (this.task.priority === 3) return this.priorities.high;
+    if (this.task.priority === TaskPriority.LOW) return this.priorities.low;
+    if (this.task.priority === TaskPriority.MEDIUM) return this.priorities.medium;
+    if (this.task.priority === TaskPriority.HIGH) return this.priorities.high;
     return this.priorities.medium; // fallback
   }
 
@@ -138,9 +137,9 @@ export class TaskCardModalComponent implements OnInit {
    * @returns {string} Priority label.
    */
   getPriorityLabel(): string {
-    if (this.task.priority === 1) return 'Low';
-    if (this.task.priority === 2) return 'Medium';
-    if (this.task.priority === 3) return 'Urgent';
+    if (this.task.priority === TaskPriority.LOW) return 'Low';
+    if (this.task.priority === TaskPriority.MEDIUM) return 'Medium';
+    if (this.task.priority === TaskPriority.HIGH) return 'Urgent';
     return 'Medium'; // fallback
   }
 

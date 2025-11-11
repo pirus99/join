@@ -2,20 +2,8 @@
  * @fileoverview Tasks service for managing task data using Firebase Firestore
  */
 
-import { inject, Injectable, OnDestroy, OnInit } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  Firestore,
-  getDocs,
-  getDoc,
-  onSnapshot,
-  Timestamp,
-  updateDoc,
-} from '@angular/fire/firestore';
 import { Task } from '../../interfaces/task';
 import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 
@@ -66,22 +54,35 @@ export enum TaskStatus {
   providedIn: 'root',
 })
 export class TasksService {
-  /** Unsubscribe function for tasks listener 
-  unsubTasks;*/
-
   /** BehaviorSubject holding the current tasks array */
   private tasksSubject = new BehaviorSubject<Task[]>([]);
 
-  private apiUrl = 'http://127.0.0.1:8000/';
-  private apiEndpoint = 'api/v1/task/';
-  private http = inject(HttpClient);
+  /**
+   * The base URL of the API endpoint.
+   * @type {string}
+   */
+  private apiUrl: string = 'http://127.0.0.1:8000/';
+
+  /**
+   * The specific API endpoint for tasks.
+   * @type {string}
+   */
+  private apiEndpoint: string = 'api/v1/task/';
+
+  /**
+   * The HTTP client for making requests to the server.
+   * @type {HttpClient}
+   */
+  private http: HttpClient = inject(HttpClient);
+
+  /**
+   * Automatically fetch tasks when the service is initialized.
+   * @type {any}
+   */
   private autoFetch: any;
 
   /** Observable stream of tasks */
   public tasks$: Observable<Task[]> = this.tasksSubject.asObservable();
-
-  /** Firestore instance */
-  firestore: Firestore = inject(Firestore);
 
   /**
    * Initializes the service and subscribes to the tasks collection.
@@ -90,48 +91,7 @@ export class TasksService {
     this.getTasks();
     this.autoFetch = setInterval(() => {
       this.getTasks();
-    }, 5000);
-  }
-
-  /**
-   * Subscribes to the tasks collection in Firestore and updates the local tasks array on changes.
-   * @returns {Function} Unsubscribe function to stop listening for updates.
-   */
-  subTasks() {
-    return onSnapshot(this.getTasksRef(), (snapshot) => {
-      const tasks = snapshot.docs.map((doc) => {
-        return this.setTaskObject(doc.data(), doc.id);
-      });
-      this.tasksSubject.next(tasks);
-    });
-  }
-
-  /**
-   * Returns a reference to the 'tasks' collection in Firestore.
-   * @returns {CollectionReference} Reference to the tasks collection.
-   */
-  getTasksRef() {
-    return collection(this.firestore, 'tasks');
-  }
-
-  /**
-   * Converts Firestore document data to a Task object.
-   * @param {any} obj - The Firestore document data.
-   * @param {string} id - The document ID.
-   * @returns {Task} The constructed Task object.
-   */
-  setTaskObject(obj: any, id: string): Task {
-    return {
-      priority: obj.priority || null,
-      title: obj.title || '',
-      category: obj.category || null,
-      subtasks: obj.subtasks || [],
-      dueDate: obj.dueDate || new Timestamp(0, 0),
-      assignedTo: obj.assignedTo || [],
-      description: obj.description || '',
-      status: obj.status || null,
-      id: id,
-    };
+    }, 10000);
   }
 
   /**
@@ -141,12 +101,11 @@ export class TasksService {
    * @throws Will throw an error if no ID is provided.
    * @returns {Promise<void>} Promise that resolves when update is complete.
    */
-  async updateTask(task: {}, id: string) {
+  async updateTask(task: {}, id: string): Promise<void> {
     if (!id || task === null) {
       throw new Error('Task id is required');
     }
     try {
-      console.log('Updating task with id:', id, 'and data:', task);
       await firstValueFrom(this.http.patch(this.apiUrl + this.apiEndpoint + id + '/', task));
       this.getTasks();
     } catch (error) {
@@ -160,7 +119,7 @@ export class TasksService {
    * @param {Task} task - The Task object to add (without an id).
    * @returns {Promise<void>} A promise that resolves when the task is added.
    */
-  async addTaskToDatabase(task: Task) {
+  async addTaskToDatabase(task: Task): Promise<void> {
     try {
       await firstValueFrom(this.http.post(this.apiUrl + this.apiEndpoint, task));
       this.getTasks();
@@ -175,19 +134,24 @@ export class TasksService {
    * @param {string} taskId - The ID of the task to delete.
    * @returns {Promise<void>} A promise that resolves when the task is deleted.
    */
-  async deleteTask(taskId: string) {
-    await deleteDoc(doc(this.firestore, 'tasks', taskId));
-    this.getTasks();
+  async deleteTask(taskId: string): Promise<void> {
+    try {
+      await firstValueFrom(this.http.delete(this.apiUrl + this.apiEndpoint + taskId + '/'));
+      this.getTasks();
+    } catch (error) {
+      console.error('Error deleting task from database:', error);
+      throw error;
+    }
   }
 
   /**
    * Retrieves a single task by ID from the API database.
    * @param {string} taskId - The ID of the task to retrieve.
-   * @returns {Promise<Task>} Promise that resolves to the Task object.
+   * @returns {Promise<{}>} Promise that resolves to the Task object.
    */
-  async getTaskById(taskId: string) {
+  async getTaskById(taskId: string): Promise<{}> {
     const response = await firstValueFrom(this.http.get(this.apiUrl + this.apiEndpoint + taskId + '/'));
-    return this.setTaskObject(response, taskId);
+    return response;
   }
 
   /**
@@ -196,18 +160,10 @@ export class TasksService {
    */
   async getTasks(): Promise<void> {
     try {
-    this.http.get(this.apiUrl + this.apiEndpoint).subscribe({
-      next: (data: any) => {
-        const tasks: Task[] = data.map((item: any) => this.setTaskObject(item, item.id));
-        this.tasksSubject.next(tasks);
-      },
-      error: (error) => {
-        console.error('Error fetching tasks from API:', error);
-        throw error;
-      }
-    });
+      const response = await firstValueFrom(this.http.get<Task[]>(this.apiUrl + this.apiEndpoint));
+      this.tasksSubject.next(response);
     } catch (error) {
-      console.error('Error in fetchTasksFromApi:', error);
+      console.error('Error fetching tasks from API:', error);
       throw error;
     }
   }
