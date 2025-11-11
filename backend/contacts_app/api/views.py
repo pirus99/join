@@ -7,6 +7,6 @@ class ContactsList(generics.ListCreateAPIView):
     serializer_class = ContactSerializer
     #permission_classes = [AllowAll]
 
-class ContactDetail(generics.ListCreateAPIView):
+class ContactDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Contact.objects.all()
     serializer_class = ContactSerializer
