@@ -2,7 +2,8 @@
  * @fileoverview Tasks service for managing task data using Firebase Firestore
  */
 
-import { inject, Injectable, OnDestroy } from '@angular/core';
+import { inject, Injectable, OnDestroy, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import {
   addDoc,
   collection,
@@ -16,7 +17,7 @@ import {
   updateDoc,
 } from '@angular/fire/firestore';
 import { Task } from '../../interfaces/task';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 
 /**
  * Enumeration of task priority levels
@@ -64,13 +65,18 @@ export enum TaskStatus {
 @Injectable({
   providedIn: 'root',
 })
-export class TasksService implements OnDestroy {
-  /** Unsubscribe function for tasks listener */
-  unsubTasks;
-  
+export class TasksService {
+  /** Unsubscribe function for tasks listener 
+  unsubTasks;*/
+
   /** BehaviorSubject holding the current tasks array */
   private tasksSubject = new BehaviorSubject<Task[]>([]);
-  
+
+  private apiUrl = 'http://127.0.0.1:8000/';
+  private apiEndpoint = 'api/v1/task/';
+  private http = inject(HttpClient);
+  private autoFetch: any;
+
   /** Observable stream of tasks */
   public tasks$: Observable<Task[]> = this.tasksSubject.asObservable();
 
@@ -81,14 +87,10 @@ export class TasksService implements OnDestroy {
    * Initializes the service and subscribes to the tasks collection.
    */
   constructor() {
-    this.unsubTasks = this.subTasks();
-  }
-
-  /**
-   * Cleans up the subscription when the service is destroyed.
-   */
-  ngOnDestroy(): void {
-    this.unsubTasks();
+    this.getTasks();
+    this.autoFetch = setInterval(() => {
+      this.getTasks();
+    }, 5000);
   }
 
   /**
@@ -133,64 +135,81 @@ export class TasksService implements OnDestroy {
   }
 
   /**
-   * Updates a task in Firestore.
+   * Updates a task in API database from ID.
    * @param {object} task - The task object with updated data.
    * @param {string} id - The ID of the task to update.
    * @throws Will throw an error if no ID is provided.
    * @returns {Promise<void>} Promise that resolves when update is complete.
    */
   async updateTask(task: {}, id: string) {
-    if (!id) {
-      throw new Error('Contact id is required');
+    if (!id || task === null) {
+      throw new Error('Task id is required');
     }
-    const taskRef = doc(this.firestore, 'tasks', id);
-    await updateDoc(taskRef, task);
+    try {
+      console.log('Updating task with id:', id, 'and data:', task);
+      await firstValueFrom(this.http.patch(this.apiUrl + this.apiEndpoint + id + '/', task));
+      this.getTasks();
+    } catch (error) {
+      console.error('Error updating task:', error);
+      throw error;
+    }
   }
 
   /**
-   * Adds a new task to the Firestore database.
+   * Adds a new task to the API database.
    * @param {Task} task - The Task object to add (without an id).
    * @returns {Promise<void>} A promise that resolves when the task is added.
    */
   async addTaskToDatabase(task: Task) {
-    const { id, ...newTask } = task;
-    await addDoc(this.getTasksRef(), newTask);
+    try {
+      await firstValueFrom(this.http.post(this.apiUrl + this.apiEndpoint, task));
+      this.getTasks();
+    } catch (error) {
+      console.error('Error adding task to database:', error);
+      throw error;
+    }
   }
 
   /**
-   * Deletes a task from the Firestore database.
+   * Deletes a task from the API database.
    * @param {string} taskId - The ID of the task to delete.
    * @returns {Promise<void>} A promise that resolves when the task is deleted.
    */
   async deleteTask(taskId: string) {
     await deleteDoc(doc(this.firestore, 'tasks', taskId));
+    this.getTasks();
   }
 
   /**
-   * Retrieves a single task by ID from the Firestore database.
+   * Retrieves a single task by ID from the API database.
    * @param {string} taskId - The ID of the task to retrieve.
    * @returns {Promise<Task>} Promise that resolves to the Task object.
    */
   async getTaskById(taskId: string) {
-  const taskDocRef = doc(this.getTasksRef(), taskId);
-  const docSnap = await getDoc(taskDocRef);
-  
-  return this.setTaskObject(docSnap.data(), docSnap.id);
-  
+    const response = await firstValueFrom(this.http.get(this.apiUrl + this.apiEndpoint + taskId + '/'));
+    return this.setTaskObject(response, taskId);
   }
 
   /**
-   * Retrieves all tasks from the Firestore database.
-   * @returns {Promise<Task[]>} A promise that resolves to an array of Task objects.
+   * Fetches tasks from the external API and updates the tasks BehaviorSubject.
+   * @returns Promise that resolves when tasks are fetched and updated.
    */
-  async getTasks() {
-    let currentTasks: Task[] = [];
-    const snapshot = await getDocs(this.getTasksRef());
-    snapshot.forEach((doc) => {
-      currentTasks.push(this.setTaskObject(doc.data(), doc.id));
+  async getTasks(): Promise<void> {
+    try {
+    this.http.get(this.apiUrl + this.apiEndpoint).subscribe({
+      next: (data: any) => {
+        const tasks: Task[] = data.map((item: any) => this.setTaskObject(item, item.id));
+        this.tasksSubject.next(tasks);
+      },
+      error: (error) => {
+        console.error('Error fetching tasks from API:', error);
+        throw error;
+      }
     });
-
-    return currentTasks;
+    } catch (error) {
+      console.error('Error in fetchTasksFromApi:', error);
+      throw error;
+    }
   }
 }
 export type { Task };
