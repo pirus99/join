@@ -122,7 +122,7 @@ export class TasksService {
    */
   setTaskObject(obj: any, id: string): Task {
     return {
-      priority: obj.priority || '',
+      priority: obj.priority || null,
       title: obj.title || '',
       category: obj.category || null,
       subtasks: obj.subtasks || [],

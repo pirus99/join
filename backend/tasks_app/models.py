@@ -4,7 +4,7 @@ class Task(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()
     subtasks = models.JSONField(default=list, blank=True)
-    priority = models.TextField(max_length=1)
+    priority = models.IntegerField()
     category = models.IntegerField(default=0)
     dueDate = models.DateField()  
     assignedTo = models.JSONField(default=list, blank=True)
