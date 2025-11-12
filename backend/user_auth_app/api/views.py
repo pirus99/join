@@ -28,6 +28,7 @@ class RegistrationView(APIView):
             saved_account = serializer.save()
             token, created = Token.objects.get_or_create(user=saved_account)
             data = {
+                'id': saved_account.id,
                 'token': token.key,
                 'first_name': saved_account.first_name,
                 'last_name': saved_account.last_name,
@@ -51,6 +52,7 @@ class CustomLoginView(ObtainAuthToken):
 
             token, created = Token.objects.get_or_create(user=user)
             data = {
+                'id': user.id,
                 'token': token.key,
                 'username': user.username,
                 'first_name': user.first_name,
