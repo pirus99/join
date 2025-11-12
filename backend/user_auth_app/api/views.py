@@ -1,19 +1,21 @@
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
-from user_auth_app.models import UserProfile
+from django.contrib.auth.models import User
 from .serializers import RegistrationSerializer, UserProfileSerializer
+from .permissions import IsOwnerOrAdmin
 
-class UserProfileList(generics.ListCreateAPIView):
-    queryset = UserProfile.objects.all()
+class UserList(generics.ListAPIView):
+    queryset = User.objects.all()
     serializer_class = UserProfileSerializer
 
-class UserProfileDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = UserProfile.objects.all()
+class UserDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
     serializer_class = UserProfileSerializer
+    permission_classes = [IsOwnerOrAdmin]
 
 class RegistrationView(APIView):
     permission_classes = [AllowAny]
@@ -27,6 +29,8 @@ class RegistrationView(APIView):
             token, created = Token.objects.get_or_create(user=saved_account)
             data = {
                 'token': token.key,
+                'first_name': saved_account.first_name,
+                'last_name': saved_account.last_name,
                 'username': saved_account.username,
                 'email': saved_account.email
             }
@@ -43,14 +47,18 @@ class CustomLoginView(ObtainAuthToken):
 
         data = {}
         if serializer.is_valid():
-            user = serializer.validated_date['user']
+            user = serializer.validated_data['user']
+
             token, created = Token.objects.get_or_create(user=user)
             data = {
                 'token': token.key,
                 'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
                 'email': user.email
             }
         else:
             data = serializer.errors
 
         return Response(data)
+    
