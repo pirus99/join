@@ -22,7 +22,7 @@ import { Subscription } from 'rxjs';
     templateUrl: './logout.component.html',
     styleUrl: './logout.component.scss',
 })
-export class LogoutComponent implements OnDestroy {
+export class LogoutComponent {
     /**
      * Auth/user service used to perform the logout action.
      */
@@ -62,25 +62,14 @@ export class LogoutComponent implements OnDestroy {
      */
     ngOnInit(): void {
         this.router.navigateByUrl('/');
-        this.logoutSubscription = this.userService.logout().subscribe({
-            next: () => {
-                this.loggedOut = true;
-                this.loginService.resetState();
-                this.loginService.verifyLogIn();
-                this.notificationService.pushNotification(
-                    'Successfully logged out!',
-                    NotificationType.SUCCESS,
-                    NotificationPosition.BOTTOM_RIGHT
-                );
-            },
-        });
-    }
-
-    /**
-     * Cleans up subscriptions on component destruction.
-     * @returns void
-     */
-    ngOnDestroy(): void {
-        this.logoutSubscription?.unsubscribe();
+        this.userService.logout()
+        this.loggedOut = true;
+        this.loginService.resetState();
+        this.loginService.verifyLogIn();
+        this.notificationService.pushNotification(
+            'Successfully logged out!',
+            NotificationType.SUCCESS,
+            NotificationPosition.BOTTOM_RIGHT
+        );
     }
 }

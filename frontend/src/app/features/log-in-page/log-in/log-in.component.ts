@@ -132,21 +132,14 @@ export class LogInComponent {
      * @param mail User email address.
      * @param pw User password.
      */
-    logIn(mail: string, pw: string) {
+    async logIn(mail: string, pw: string) {
         if (!mail || (!pw && new FormControl('logInForm'))) {
             this.warn = true;
             return;
         }
-        this.userService.login(mail, pw).subscribe({
-            next: () => {
-                this.router.navigate(['/summary']);
-                this.logInService.verifyLogIn();
-            },
-            error: (error) => {
-                this.warn = true;
-                console.error('something went wrong', error);
-            },
-        });
+        await this.userService.login(mail, pw)
+        this.router.navigate(['/summary']);
+        this.logInService.verifyLogIn();
     }
 
     /**
@@ -170,7 +163,11 @@ export class LogInComponent {
      * Navigates to summary on success.
      * @param form Template-driven form reference.
      */
-    signUp(form: NgForm) {
+    async signUp(form: NgForm) {
+        const nameParts = this.signUpName.trim().split(' ');
+        this.contact.firstName = nameParts.slice(0, 1).join('');
+        this.contact.lastName = nameParts.slice(1).join('');
+
         if (form.invalid || !this.privacyCheckbox || this.signUpPassword1 !== this.signUpPassword2) {
             if (!this.privacyCheckbox) {
                 this.warnSignUpPrivacy = true;
@@ -180,16 +177,12 @@ export class LogInComponent {
             console.error('Form Validation failed');
             return;
         }
-        this.userService.signUp(this.signUpEmail, this.signUpPassword1, this.signUpName).subscribe({
-            next: () => {
-                this.createContact();
-                this.logInService.verifyLogIn();
-                this.router.navigate(['/summary']);
-            },
-            error: (error) => {
-                console.error('Database Error', error);
-            },
-        });
+
+        await this.userService.signUp(this.signUpEmail, this.signUpPassword1, this.contact.firstName, this.contact.lastName)
+        //await this.createContact();
+        this.logInService.verifyLogIn();
+        this.router.navigate(['/summary']);
+
     }
 
     /**
@@ -197,14 +190,10 @@ export class LogInComponent {
      * Derives first/last name from the display name.
      */
     async createContact() {
-        const nameParts = this.signUpName.trim().split(' ');
-        this.contact.firstName = nameParts.slice(0, 1).join('');
-        this.contact.lastName = nameParts.slice(1).join('');
-
         this.contact.email = this.signUpEmail;
         this.contact.phoneNumber = 'No phone number added yet';
         // Note: This sets id using a subscription's toString(); consider retrieving the UID directly instead.
-        this.contact.id = this.userService.user$.subscribe((user) => user?.uid).toString();
+        this.contact.id = this.userService.user!.id.toString();
         try {
             await this.contactsService.addContactToDatabase(this.contact);
             this.notificationService.pushNotification(
@@ -226,21 +215,10 @@ export class LogInComponent {
      * Logs in using a guest account and navigates to the summary on success.
      */
     loginGuest() {
-        this.userService.loginGuest().subscribe({
-            next: () => {
-                this.logInService.verifyLogIn();
-                this.router.navigate(['/summary']);
-            },
-            error: (error) => {
-                this.notificationService.pushNotification(
-                    'Error adding Guest Account!',
-                    NotificationType.ERROR,
-                    NotificationPosition.TOP_RIGHT
-                );
-                console.error('Database Error', error);
-            },
-        });
+        this.logInService.verifyLogIn();
+        this.router.navigate(['/summary']);
     }
+
 
     /**
      * Toggles visibility of the login password field.

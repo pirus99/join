@@ -5,6 +5,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { UserService } from './firebase/user.service';
+import { GlobalConfig } from '../../global-config';
 
 /**
  * Service for managing login state, navigation and animations
@@ -33,7 +34,7 @@ export class LoginService {
      * Creates an instance of LoginService
      * @param {UserService} userService - Injected user service for authentication
      */
-    constructor(private userService: UserService) {}
+    constructor(private userService: UserService) { }
 
     /**
      * Resets the login and animation states to their default values.
@@ -59,10 +60,12 @@ export class LoginService {
      * Updates actualLoginSubject and animateSubject based on whether a user is present.
      */
     verifyLogIn(): void {
-        this.userService.user$.subscribe((user) => {
-            const isLoggedIn = !!user;
-            this.actualLoginSubject.next(isLoggedIn);
-            this.animateSubject.next(!isLoggedIn);
-        });
+            if (!GlobalConfig.token || GlobalConfig.token === 'undefined') {
+                this.actualLoginSubject.next(false);
+                this.animateSubject.next(true);
+            } else {
+                this.actualLoginSubject.next(true);
+                this.animateSubject.next(false);
+            }
     }
 }

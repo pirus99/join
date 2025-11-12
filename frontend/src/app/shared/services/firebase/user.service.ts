@@ -3,20 +3,10 @@
  */
 
 import { inject, Injectable } from '@angular/core';
-import {
-    Auth,
-    browserSessionPersistence,
-    createUserWithEmailAndPassword,
-    setPersistence,
-    signInWithEmailAndPassword,
-    signOut,
-    updateProfile,
-    user,
-    User,
-    getAuth,
-    signInAnonymously
-} from '@angular/fire/auth';
 import { firstValueFrom, from, Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { GlobalConfig } from '../../../global-config';
+import { User as AuthUser } from '../../interfaces/user';
 
 /**
  * Service for user authentication and management using Firebase
@@ -27,19 +17,19 @@ import { firstValueFrom, from, Observable } from 'rxjs';
 })
 export class UserService {
     /** Observable stream of the current user */
-    user$: Observable<User | null>;
+    user: AuthUser | null = null;
 
-    /** Firebase Auth instance */
-    auth = inject(Auth);
+    apiEndpoint: string = 'api/v1/auth/';
+    loginEndpoint: string = 'login/'
+    registerEndpoint: string = 'register/'
+
+    http = inject(HttpClient);
 
     /**
      * Creates an instance of UserService and sets up authentication persistence
      */
     constructor() {
-        this.user$ = user(this.auth);
-        this.auth.setPersistence(browserSessionPersistence).catch((e) => {
-            console.error(e);
-        });
+        this.user = sessionStorage.getItem('user') ? JSON.parse(sessionStorage.getItem('user')!) : null;
     }
 
     /**
@@ -56,24 +46,31 @@ export class UserService {
      * 
      * @param {string} email - User's email address
      * @param {string} password - User's password
-     * @returns {Observable<void>} Observable that completes when login is successful
+     * @returns {Promise<AuthUser>} Observable that completes when login is successful
      */
-    login(email: string, password: string): Observable<void> {
-        const promise = signInWithEmailAndPassword(this.auth, email, password).then((result) => {
-            console.log('logged in', result.user);
-        });
-        return from(promise);
+    async login(email: string, password: string): Promise<AuthUser> {
+        try {
+            const response = await firstValueFrom(this.http.post<AuthUser>(GlobalConfig.apiUrl + this.apiEndpoint + 'login/', { 'username': email, 'password': password }));
+            const token = response.token;
+            const id = response.id;
+            sessionStorage.setItem('authToken', token);
+            GlobalConfig.token = token;
+            this.user = response;
+            sessionStorage.setItem('user', JSON.stringify(this.user));
+            console.log('Login successful', response);
+            return response
+        } catch (error) {
+            console.error('Login failed', error);
+            throw error;
+        }    
     }
 
     /**
      * Logs out the current user and clears session storage
-     * @returns {Observable<void>} Observable that completes when logout is successful
      */
-    logout(): Observable<void> {
-        const promise = signOut(this.auth).then(() => {
-            sessionStorage.clear();
-        });
-        return from(promise);
+    logout(): void {
+        sessionStorage.clear();
+        GlobalConfig.token = null;
     }
 
     /**
@@ -83,16 +80,21 @@ export class UserService {
      * @param {string} displayName - User's display name
      * @returns {Observable<void>} Observable that completes when signup is successful
      */
-    signUp(email: string, password: string, displayName: string): Observable<void> {
-        const promise = createUserWithEmailAndPassword(this.auth, email, password).then(async (result) => {
-            // Example
-            const user = result.user;
-            await updateProfile(user, { displayName })
-            await result.user.reload()
-            // trigger notification
-            // ...
-        });
-        return from(promise);
+    async signUp(email: string, password: string, firstName: string, lastName: string) {
+        try {
+            console.log('Signing up user with', email, firstName, lastName);
+            const response = await firstValueFrom(this.http.post<AuthUser>(GlobalConfig.apiUrl + this.apiEndpoint + 'registration/', { first_name: firstName, last_name: lastName, email: email, password: password }));
+            const token = response.token;
+            const id = response.id;
+            sessionStorage.setItem('authToken', token);
+            GlobalConfig.token = token;
+            sessionStorage.setItem('id', id);
+            console.log('Sign up successful', response);
+            return response
+        } catch (error) {
+            console.error('Sign up failed', error);
+            throw error;
+        } 
     }
 
     /**
@@ -100,15 +102,6 @@ export class UserService {
      * @returns {Promise<any>} Promise that resolves when guest login is successful
      */
     loginGuest() {
-        const promise = signInAnonymously(this.auth).then(async (result) => {
-            // Example
-            const user = result.user;
-            const displayName = 'Guest'
-            await updateProfile(user, { displayName })
-            await result.user.reload()
-            // trigger notification
-            // ...
-        });
-        return from(promise);
+        
     }
 }

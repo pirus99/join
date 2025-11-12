@@ -86,9 +86,7 @@ export class SummaryComponent implements OnInit, OnDestroy {
 
   /** Subscribe to user observable and set user name */
   private subscribeUser(): void {
-    this.userSub = this.userService.user$.subscribe(user => {
-      this.userName = user?.displayName || 'Guest';
-    });
+    this.userName = this.userService.user?.first_name + ' ' + this.userService.user?.last_name;
   }
 
   /**

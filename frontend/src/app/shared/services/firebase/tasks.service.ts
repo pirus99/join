@@ -4,8 +4,10 @@
 
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { HttpHeaders } from '@angular/common/http';
 import { Task } from '../../interfaces/task';
 import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
+import { GlobalConfig } from '../../../global-config';
 
 /**
  * Enumeration of task priority levels
@@ -58,12 +60,6 @@ export class TasksService {
   private tasksSubject = new BehaviorSubject<Task[]>([]);
 
   /**
-   * The base URL of the API endpoint.
-   * @type {string}
-   */
-  private apiUrl: string = 'http://127.0.0.1:8000/';
-
-  /**
    * The specific API endpoint for tasks.
    * @type {string}
    */
@@ -105,8 +101,11 @@ export class TasksService {
     if (!id || task === null) {
       throw new Error('Task id is required');
     }
+    const url = GlobalConfig.apiUrl + this.apiEndpoint + id + '/';
+    const options = { headers: GlobalConfig.authHeader() };
+
     try {
-      await firstValueFrom(this.http.patch(this.apiUrl + this.apiEndpoint + id + '/', task));
+      await firstValueFrom(this.http.patch(url, task, options));
       this.getTasks();
     } catch (error) {
       console.error('Error updating task:', error);
@@ -120,8 +119,11 @@ export class TasksService {
    * @returns {Promise<void>} A promise that resolves when the task is added.
    */
   async addTaskToDatabase(task: Task): Promise<void> {
+    const url = GlobalConfig.apiUrl + this.apiEndpoint;
+    const options = { headers: GlobalConfig.authHeader() };
+
     try {
-      await firstValueFrom(this.http.post(this.apiUrl + this.apiEndpoint, task));
+      await firstValueFrom(this.http.post(url, task, options));
       this.getTasks();
     } catch (error) {
       console.error('Error adding task to database:', error);
@@ -135,8 +137,10 @@ export class TasksService {
    * @returns {Promise<void>} A promise that resolves when the task is deleted.
    */
   async deleteTask(taskId: string): Promise<void> {
+    const options = { headers: GlobalConfig.authHeader() };
+
     try {
-      await firstValueFrom(this.http.delete(this.apiUrl + this.apiEndpoint + taskId + '/'));
+      await firstValueFrom(this.http.delete(GlobalConfig.apiUrl + this.apiEndpoint + taskId + '/', options));
       this.getTasks();
     } catch (error) {
       console.error('Error deleting task from database:', error);
@@ -150,7 +154,9 @@ export class TasksService {
    * @returns {Promise<{}>} Promise that resolves to the Task object.
    */
   async getTaskById(taskId: string): Promise<{}> {
-    const response = await firstValueFrom(this.http.get(this.apiUrl + this.apiEndpoint + taskId + '/'));
+    const options = { headers: GlobalConfig.authHeader() };
+
+    const response = await firstValueFrom(this.http.get(GlobalConfig.apiUrl + this.apiEndpoint + taskId + '/', options));
     return response;
   }
 
@@ -159,8 +165,10 @@ export class TasksService {
    * @returns Promise that resolves when tasks are fetched and updated.
    */
   async getTasks(): Promise<void> {
+    const options = { headers: GlobalConfig.authHeader() };
+
     try {
-      const response = await firstValueFrom(this.http.get<Task[]>(this.apiUrl + this.apiEndpoint));
+      const response = await firstValueFrom(this.http.get<Task[]>(GlobalConfig.apiUrl + this.apiEndpoint, options));
       this.tasksSubject.next(response);
     } catch (error) {
       console.error('Error fetching tasks from API:', error);

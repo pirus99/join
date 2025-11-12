@@ -15,11 +15,11 @@ import { LoginService } from '../services/app-login-service.service';
  * @param {RouterStateSnapshot} state - The router state snapshot
  * @returns {Observable<boolean>} Observable that emits true if user is authenticated, false otherwise
  */
-export const authGuard: CanActivateFn = (route, state) => {
+ export const authGuard: CanActivateFn = (route, state) => {
     const userService = inject(UserService);
     const logIn = inject(LoginService);
 
-    return userService.user$.pipe(
+    return true /* userService.user?.pipe(
         map((user) => {
             if (user) {
                 return true;
@@ -30,5 +30,5 @@ export const authGuard: CanActivateFn = (route, state) => {
                 return false;
             }
         })
-    );
-};
+    ); */
+}; 

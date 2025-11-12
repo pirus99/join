@@ -85,14 +85,13 @@ export class HeaderComponent implements OnDestroy {
             this.loggedIn = isLoggedIn;
         });
 
-        const userSub = this.userService.user$.subscribe((user) => {
-            const nameArray = user?.displayName ? user.displayName.split(' ') : [];
+        const nameArray = [];
+        nameArray.push(this.userService.user?.first_name ?? '');
+        nameArray.push(this.userService.user?.last_name ?? '');
             this.NameInitial =
                 nameArray.length > 1 ? `${nameArray[0][0]}${nameArray[1][0]}` : nameArray[0]?.charAt(0) ?? null;
-        });
 
         this.subscriptions.add(loginSub);
-        this.subscriptions.add(userSub);
     }
 
     /**
