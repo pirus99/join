@@ -93,7 +93,6 @@ export class TaskCardComponent implements OnInit {
      */
     ngOnInit(): void {
         this.taskCategory = this.getTaskCategory();
-        this.updateAssignedInitials();
         this.taskComService.taskChanged$.subscribe((val) => {
             this.taskCategory = this.getTaskCategory();
             this.updateAssignedInitials();

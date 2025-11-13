@@ -149,8 +149,6 @@ export class TaskCardModalComponent implements OnInit {
    */
   async updateAssignedContacts() {
   this.assignedContacts = [];
-  this.selectedContacts = [];
-
   if (!this.task || !this.task.assignedTo) return;
 
   for (let i = 0; i < this.task.assignedTo.length; i++) {
