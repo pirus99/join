@@ -12,6 +12,7 @@ import { ContactsService } from '../../../shared/services/firebase/contacts.serv
 import { Contact } from '../../../shared/interfaces/contact';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { NotificationType, NotificationPosition } from '../../../shared/interfaces/notification';
+import { GlobalConfig } from '../../../global-config';
 
 @Component({
     selector: 'app-log-in',
@@ -125,6 +126,12 @@ export class LogInComponent {
      * Angular Router for navigation after authentication.
      */
     router = inject(Router);
+
+    ngOnInit() {
+        if (GlobalConfig.token !== null) {
+            this.contactsService.getContacts();
+        }
+    }
 
     /**
      * Logs in a user with provided email and password.
