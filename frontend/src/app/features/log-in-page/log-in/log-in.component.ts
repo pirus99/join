@@ -179,7 +179,7 @@ export class LogInComponent {
         }
 
         await this.userService.signUp(this.signUpEmail, this.signUpPassword1, this.contact.firstName, this.contact.lastName)
-        //await this.createContact();
+        await this.createContact();
         this.logInService.verifyLogIn();
         this.router.navigate(['/summary']);
 
@@ -192,8 +192,7 @@ export class LogInComponent {
     async createContact() {
         this.contact.email = this.signUpEmail;
         this.contact.phoneNumber = 'No phone number added yet';
-        // Note: This sets id using a subscription's toString(); consider retrieving the UID directly instead.
-        this.contact.id = this.userService.user!.id.toString();
+        
         try {
             await this.contactsService.addContactToDatabase(this.contact);
             this.notificationService.pushNotification(

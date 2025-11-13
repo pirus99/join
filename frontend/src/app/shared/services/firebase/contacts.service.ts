@@ -14,6 +14,9 @@ import {
   updateDoc,
 } from '@angular/fire/firestore';
 import { Contact } from '../../interfaces/contact';
+import { GlobalConfig } from '../../../global-config';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, firstValueFrom } from 'rxjs';
 
 /**
  * Service for managing contacts using Firebase Firestore
@@ -22,89 +25,63 @@ import { Contact } from '../../interfaces/contact';
 @Injectable({
   providedIn: 'root',
 })
-export class ContactsService implements OnDestroy {
-  /** Unsubscribe function for contacts listener */
-  unsubContacts;
-
+export class ContactsService {
   /** Contacts organized by first name initial */
+  contactsSubject = new BehaviorSubject<Contact[]>([]);
+
   contacts: { [initial: string]: Contact[] } = {};
+
+  singleContact: Contact | undefined;
 
   /** Firestore instance */
   firestore: Firestore = inject(Firestore);
-  
+
   /** First name property (legacy, consider removing if unused) */
   firstName: any;
+
+  http = inject(HttpClient);
 
   /**
    * Creates an instance of ContactsService and subscribes to contacts
    */
   constructor() {
-    this.unsubContacts = this.subContactsList();
-  }
-  
-  /**
-   * Cleanup subscriptions when service is destroyed
-   */
-  ngOnDestroy(): void {
-    this.unsubContacts();
   }
 
-  /**
-   * Subscribes to the contacts collection and organizes them by initial
-   * @returns {Function} Unsubscribe function
-   */
-  subContactsList() {
-    return onSnapshot(this.getContactsRef(), (list) => {
-      this.contacts = {};
+  async getContacts() {
+    const options = { headers: GlobalConfig.authHeader() };
 
-      let initials: string[] = [];
+    try {
+      const response = await firstValueFrom(
+        this.http.get<Contact[]>(GlobalConfig.apiUrl + GlobalConfig.apiEndpoint + 'contact/', options)
+      );
 
-      list.forEach((el) => {
-        const tmpContact = this.setContactObject(el.data(), el.id);
-        const initial: string = tmpContact.firstName.charAt(0).toUpperCase();
-        if (!initials.includes(initial)) {
-          initials.push(initial);
-        }
-      });
+      this.contactsSubject.next(response);
+      this.sortContacts();
+      return this.contactsSubject
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+      throw error;
+    }
+  }
 
-      initials.sort();
-
-      initials.forEach((initial) => {
-        this.contacts[initial] = [];
-      });
-
-      list.forEach((el) => {
-        const contact = this.setContactObject(el.data(), el.id);
-        const initial: string = contact.firstName.charAt(0).toUpperCase();
-
-        this.contacts[initial].push(contact);
-        // this.contacts.push(this.setContactObject(el.data(), el.id));
-      });
+  sortContacts() {
+    let initial: string = '';
+    let initials: string[] = [];
+    let sortedContacts: { [initial: string]: Contact[] } = {};
+    this.contactsSubject.value.forEach((contact) => {
+      initial = contact.firstName.charAt(0).toUpperCase();
+      if (!initials.includes(initial)) {
+        initials.push(initial);
+      }
+      sortedContacts[initial] = sortedContacts[initial] || [];
+      sortedContacts[initial].push(contact);
     });
-  }
-
-  /**
-   * Gets reference to the contacts collection in Firestore
-   * @returns {CollectionReference} Reference to contacts collection
-   */
-  getContactsRef() {
-    return collection(this.firestore, 'contacts');
-  }
-
-  /**
-   * Converts Firestore document data to a Contact object
-   * @param {any} obj - Firestore document data
-   * @param {string} id - Document ID
-   * @returns {Contact} Formatted contact object
-   */
-  setContactObject(obj: any, id: string): Contact {
-    return {
-      id: id,
-      firstName: obj.firstName || '',
-      lastName: obj.lastName || '',
-      email: obj.email || '',
-      phoneNumber: obj.phoneNumber || '',
-    };
+    initials.sort();
+    let organizedContacts: { [initial: string]: Contact[] } = {};
+    for (let i = 0; i < initials.length; i++) {
+      organizedContacts[initials[i]] = sortedContacts[initials[i]];
+    }
+    this.contacts = organizedContacts;
   }
 
   /**
@@ -112,26 +89,18 @@ export class ContactsService implements OnDestroy {
    * @param {string} id - Contact ID to search for
    * @returns {Contact | undefined} Found contact or undefined
    */
-  getContactById(id: string) {
-    for (const [initial, contacts] of Object.entries(this.contacts)) {
-      let result = contacts.find((contact) => contact.id === id);
-      if (result) return result;
+  async getContactById(id: string) {
+    const options = { headers: GlobalConfig.authHeader() };
+    try {
+      const response = await firstValueFrom(
+        this.http.get<Contact>(GlobalConfig.apiUrl + GlobalConfig.apiEndpoint + 'contact/' + id + '/', options)
+      );
+      this.singleContact = response;
+      return response;
+    } catch (error) {
+      console.error('Error fetching contact by ID:', error);
+      throw error;
     }
-    return undefined;
-  }
-
-  /**
-   * Retrieves all contacts from Firestore
-   * @returns {Promise<Contact[]>} Promise resolving to array of contacts
-   */
-  async getContacts() {
-    let currentContacts: Contact[] = [];
-    const snapshot = await getDocs(this.getContactsRef());
-    snapshot.forEach((doc) => {
-      currentContacts.push(this.setContactObject(doc.data(), doc.id));
-    });
-
-    return currentContacts;
   }
 
   /**
@@ -140,7 +109,17 @@ export class ContactsService implements OnDestroy {
    * @returns {Promise<void>} Promise that resolves when deletion is complete
    */
   async deleteContact(contactId: string) {
-    await deleteDoc(doc(this.firestore, 'contacts', contactId));
+    const options = GlobalConfig.authHeader();
+
+    try {
+      await firstValueFrom(
+        this.http.delete(GlobalConfig.apiUrl + GlobalConfig.apiEndpoint + 'contact/' + contactId + '/', { headers: options })
+      );
+      this.getContacts();
+    } catch (error) {
+      console.error('Error deleting contact:', error);
+      throw error;
+    }
   }
 
   /**
@@ -151,11 +130,19 @@ export class ContactsService implements OnDestroy {
    * @returns {Promise<void>} A Promise that resolves when the update is complete.
    */
   async updateContact(contact: {}, id: string) {
-    if (!id) {
-      throw new Error('Contact ID is required');
+    if (!id || contact === null) {
+      throw new Error('Contact id is required');
     }
-    const contactRef = doc(this.firestore, 'contacts', id);
-    await updateDoc(contactRef, contact);
+    const options = GlobalConfig.authHeader();
+    try {
+      await firstValueFrom(
+        this.http.patch(GlobalConfig.apiUrl + GlobalConfig.apiEndpoint + 'contact/' + id + '/', contact, { headers: options })
+      );
+      this.getContacts();
+    } catch (error) {
+      console.error('Error updating contact:', error);
+      throw error;
+    }
   }
 
   /**
@@ -164,12 +151,18 @@ export class ContactsService implements OnDestroy {
    * @returns {Promise<void>} Promise that resolves when contact is added
    */
   async addContactToDatabase(contact: Contact) {
-    let contactWithoutId = {
-      firstName: contact.firstName,
-      lastName: contact.lastName,
-      email: contact.email,
-      phoneNumber: contact.phoneNumber,
-    };
-    await addDoc(this.getContactsRef(), contactWithoutId);
+    if (!contact) {
+      throw new Error('Contact data is required');
+    }
+    const options = GlobalConfig.authHeader();
+    try {
+      await firstValueFrom(
+        this.http.post(GlobalConfig.apiUrl + GlobalConfig.apiEndpoint + 'contact/', contact, { headers: options })
+      );
+      this.getContacts();
+    } catch (error) {
+      console.error('Error adding contact to database:', error);
+      throw error;
+    }
   }
 }

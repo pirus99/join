@@ -111,7 +111,7 @@ export class TaskCardComponent implements OnInit {
      * Builds the list of assignee initials and colors for display.
      * Safely handles missing task or empty assignees array.
      */
-    updateAssignedInitials(): void {
+    async updateAssignedInitials() {
         this.assignedInitials = [];
 
         if (!this.task || !this.task.assignedTo) {
@@ -120,7 +120,9 @@ export class TaskCardComponent implements OnInit {
 
         for (let i = 0; i < this.task.assignedTo.length; i++) {
             const id = this.task.assignedTo[i];
-            const contact: Contact | undefined = this.contactsService.getContactById(id);
+
+            await this.contactsService.getContactById(id);
+            const contact: Contact | undefined = this.contactsService.singleContact;
 
             if (contact) {
                 const initials: String = this.initialLetterService.getInitialLetters(contact);

@@ -64,7 +64,8 @@ export class AssignContactInputComponent {
   }
 
   async loadContacts() {
-    this.contacts = await this.contactsService.getContacts();
+    await this.contactsService.getContacts();
+    this.contacts = this.contactsService.contactsSubject.getValue();
   }
 
   cleanupValue(searchInputValue?: string) {

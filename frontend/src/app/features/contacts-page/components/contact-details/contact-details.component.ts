@@ -96,7 +96,7 @@ export class ContactDetailsComponent implements OnInit {
      * @param svgService Service to fetch inline SVG content.
      * @param sanitizer Angular DomSanitizer to trust loaded SVG safely.
      */
-    constructor(private svgService: SVGInlineService, private sanitizer: DomSanitizer) {}
+    constructor(private svgService: SVGInlineService, private sanitizer: DomSanitizer) { }
 
     /**
      * Subscribes to selected contact id changes and updates the details view.
@@ -129,13 +129,14 @@ export class ContactDetailsComponent implements OnInit {
      * @param id Contact id to display. Empty string clears the panel.
      * @param refresh If true, updates immediately without transition.
      */
-    updateDetailDisplay(id: string, refresh: boolean): void {
+    async updateDetailDisplay(id: string, refresh: boolean) {
         if (id === '') {
             this.currentContact = null;
             return;
         }
         if (refresh) {
-            this.currentContact = this.contactsService.getContactById(id);
+            await this.contactsService.getContactById(id)
+            this.currentContact = this.contactsService.singleContact;
             return;
         }
         const detailsEl = document.querySelector('#contactDetails');
@@ -144,11 +145,13 @@ export class ContactDetailsComponent implements OnInit {
             detailsEl.classList.add('fade-out');
             setTimeout(() => {
                 detailsEl.classList.remove('fade-out');
-                this.currentContact = this.contactsService.getContactById(id);
+                this.contactsService.getContactById(id)
+                this.currentContact = this.contactsService.singleContact;
                 detailsEl.classList.add('slide-in');
             }, 190);
         } else {
-            this.currentContact = this.contactsService.getContactById(id);
+            await this.contactsService.getContactById(id)
+            this.currentContact = this.contactsService.singleContact;
             if (detailsEl) {
                 detailsEl.classList.add('slide-in');
             }

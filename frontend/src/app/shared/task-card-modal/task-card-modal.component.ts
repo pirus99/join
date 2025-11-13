@@ -147,7 +147,7 @@ export class TaskCardModalComponent implements OnInit {
    * Updates the list of assigned contacts for this task.
    * Builds initials, color, and name for each assigned contact.
    */
-  updateAssignedContacts(): void {
+  async updateAssignedContacts() {
   this.assignedContacts = [];
   this.selectedContacts = [];
 
@@ -155,7 +155,9 @@ export class TaskCardModalComponent implements OnInit {
 
   for (let i = 0; i < this.task.assignedTo.length; i++) {
     const id = this.task.assignedTo[i];
-    const contact: Contact | undefined = this.contactsService.getContactById(id);
+
+    await this.contactsService.getContactById(id);
+    const contact: Contact | undefined = this.contactsService.singleContact;
 
     if (contact) {
       this.selectedContacts.push(contact);

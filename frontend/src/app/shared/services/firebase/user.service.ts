@@ -88,7 +88,8 @@ export class UserService {
             const id = response.id;
             sessionStorage.setItem('authToken', token);
             GlobalConfig.token = token;
-            sessionStorage.setItem('id', id);
+            this.user = response;
+            sessionStorage.setItem('user', JSON.stringify(this.user));
             console.log('Sign up successful', response);
             return response
         } catch (error) {
