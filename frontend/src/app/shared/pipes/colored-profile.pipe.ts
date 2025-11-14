@@ -43,13 +43,7 @@ export class ColoredProfilePipe implements PipeTransform {
   transform(value: any) {
     if (!value) return '';
 
-    let hash = 0;
-
-    for (let i = 0; i < value.length; i++) {
-      hash = value.charCodeAt(i) + ((hash << 5) - hash);
-    }
-
-    const positiveHash = Math.abs(hash);
+    const positiveHash = Math.abs(value);
 
     const colorIndex = positiveHash % this.colorPalette.length;
 
