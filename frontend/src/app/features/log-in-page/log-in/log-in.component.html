@@ -20,7 +20,7 @@
                         required
                         [(ngModel)]="logInEmail"
                         #logInEmailVar="ngModel"
-                        [class.red-border]="warn"
+                        [class.red-border]="warn || userService.credentialFault"
                         autocomplete="email"
                     />
                     <img class="input-icon" src="assets/icons/mail.svg" alt="E-Mail icon">
@@ -35,11 +35,11 @@
                         [(ngModel)]="logInPassword"
                         #logInPasswordVar="ngModel"
                         #passwordField
-                        [class.red-border]="warn"
+                        [class.red-border]="warn || userService.credentialFault"
                     />
                     <img class="input-icon" (click)="togglePasswordVisibility()" [class.d-none]="inputType === 'text'" src="assets/icons/lock.svg" alt="Password icon">
                     <img class="input-icon" (click)="togglePasswordVisibility()" [class.d-none]="inputType === 'password'" src="assets/icons/visibility_off.svg" alt="Password icon">
-                    <div class="warn-text" [class.opacity-1]="warn">Check your email and password. Please try again.</div>
+                    <div class="warn-text" [class.opacity-1]="warn || userService.credentialFault">Check your email and password. Please try again.</div>
                 </div>
                 <div class="button-wrapper desktop">
                     <app-button [type]="'submit'">Log in</app-button>
@@ -89,15 +89,17 @@
                         email
                         [(ngModel)]="signUpEmail"
                         #signUpEmailVar="ngModel"
-                        [class.red-border]="signUpEmailVar.invalid && signUpForm.submitted"
+                        [class.red-border]="signUpEmailVar.invalid && signUpForm.submitted || userService.emailFault"
                         autocomplete="email"
                     />
                     <img class="input-icon" src="assets/icons/mail.svg" alt="E-Mail icon">
-                    @if (signUpEmailVar.invalid && signUpForm.submitted) {
+                    @if (signUpEmailVar.invalid && signUpForm.submitted || userService.emailFault) {
                         @if (signUpEmailVar.hasError('required')) {
                             <div class="warn-text" [class.opacity-1]="true">Email is required.</div>
                         } @else if (signUpEmailVar.hasError('email')) {
                             <div class="warn-text" [class.opacity-1]="true">Email must be a valid email address.</div>
+                        } @else if (userService.emailFault) {
+                            <div class="warn-text" [class.opacity-1]="true">Email already created User Account</div>
                         }
                     }
                 </div>
