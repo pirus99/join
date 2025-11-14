@@ -60,7 +60,6 @@ export class UserService {
             }
         });
         const token = response.token;
-        const id = response.id;
         sessionStorage.setItem('authToken', token);
         GlobalConfig.token = token;
         this.user = response;
@@ -99,7 +98,6 @@ export class UserService {
             }
         });
         const token = response.token;
-        const id = response.id;
         sessionStorage.setItem('authToken', token);
         GlobalConfig.token = token;
         this.user = response;
