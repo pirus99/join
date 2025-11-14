@@ -5,8 +5,10 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
 from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from .serializers import RegistrationSerializer, UserProfileSerializer
 from .permissions import IsOwnerOrAdmin
+
 
 class UserList(generics.ListAPIView):
     queryset = User.objects.all()
@@ -37,6 +39,14 @@ class RegistrationView(APIView):
             }
         else:
             data = serializer.errors
+            if 'first_name' in data and "This field is required." in data['first_name']:
+                return Response(data, status=status.HTTP_400_BAD_REQUEST)
+            if 'last_name' in data and "This field is required." in data['last_name']:
+                return Response(data, status=status.HTTP_400_BAD_REQUEST)
+            if 'password' in data and "This field is required." in data['password']:
+                return Response(data, status=status.HTTP_400_BAD_REQUEST)
+            if 'email' in data and "This field is required." in data['email']:
+                return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(data)
     
@@ -62,5 +72,12 @@ class CustomLoginView(ObtainAuthToken):
         else:
             data = serializer.errors
 
+            if 'non_field_errors' in data and "Unable to log in with provided credentials." in data['non_field_errors']:
+                return Response(data, status=status.HTTP_401_UNAUTHORIZED)
+            if 'username' in data and "This field is required." in data['username']:
+                return Response(data, status=status.HTTP_400_BAD_REQUEST)
+            if 'password' in data and "This field is required." in data['password']:
+                return Response(data, status=status.HTTP_400_BAD_REQUEST)
+        
         return Response(data)
     

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
+from django.db import IntegrityError
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,10 +36,27 @@ class RegistrationSerializer(serializers.ModelSerializer):
                 'required': True,
             }
         }
+    def save(self): 
+         
+        UserModel = get_user_model()
+        pw = self.validated_data.get('password')
+        email = self.validated_data.get('email')
+        username = self.validated_data.get('email') #Using E-Mail instead of username to sign-in
 
-    def save(self):
-        pw= self.validated_data['password']
-        account = User(email=self.validated_data['email'], username=self.validated_data['email'], first_name=self.validated_data['first_name'], last_name=self.validated_data['last_name'])
+        if not pw:
+            raise serializers.ValidationError({'password': 'Password is required.'})
+        if not email:
+            raise serializers.ValidationError({'email': 'Email is required.'})
+
+        account = UserModel(
+            email=email,
+            username=username,
+            first_name=self.validated_data.get('first_name', ''),
+            last_name=self.validated_data.get('last_name', '')
+        )
         account.set_password(pw)
-        account.save()
+        try:
+            account.save()
+        except IntegrityError:
+            raise serializers.ValidationError('email/username already taken.')
         return account
