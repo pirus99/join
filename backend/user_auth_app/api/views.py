@@ -1,6 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
@@ -9,6 +9,12 @@ from django.contrib.auth import get_user_model
 from .serializers import RegistrationSerializer, UserProfileSerializer
 from .permissions import IsOwnerOrAdmin
 
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        request.user.auth_token.delete()
+        return Response({"message": "Logged out successfully"}, status=200)
 
 class UserList(generics.ListAPIView):
     queryset = User.objects.all()
