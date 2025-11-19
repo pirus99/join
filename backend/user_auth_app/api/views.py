@@ -54,7 +54,7 @@ class RegistrationView(APIView):
             if 'email' in data and "This field is required." in data['email']:
                 return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(data)
+        return Response(data, status=201)
     
 class CustomLoginView(ObtainAuthToken):
     permission_classes = [AllowAny]
