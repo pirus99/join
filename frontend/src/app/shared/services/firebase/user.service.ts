@@ -71,7 +71,14 @@ export class UserService {
     /**
      * Logs out the current user and clears session storage
      */
-    logout(): void {
+    async logout() {
+        const response = await firstValueFrom(this.http.post<any>(GlobalConfig.apiUrl + this.apiEndpoint + 'logout/', {})).catch(error => {
+            console.error('Logout error', error);
+            this.notify.pushNotification('Logout Error, Please Try Again', NotificationType.ERROR, NotificationPosition.TOP_RIGHT, 8000);
+            return;
+        });
+        console.log('Logout successful', response);
+        this.user = null;
         sessionStorage.clear();
         GlobalConfig.token = null;
     }
