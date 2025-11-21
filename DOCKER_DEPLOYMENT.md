@@ -68,6 +68,121 @@ docker exec -it join-backend python manage.py migrate
 docker exec -it join-backend python manage.py createsuperuser
 ```
 
+## 🔒 SSL/TLS Configuration
+
+The application now supports HTTPS by default. You can choose between self-signed certificates (for development/testing) or Let's Encrypt (for production).
+
+### Option 1: Self-Signed Certificates (Recommended for Development)
+
+Self-signed certificates are perfect for local development and testing before deploying to production.
+
+#### Step 1: Generate Self-Signed Certificate
+
+Run the certificate generation script:
+
+```bash
+./generate-self-signed-cert.sh
+```
+
+Or with a custom domain:
+
+```bash
+./generate-self-signed-cert.sh yourdomain.com
+```
+
+This creates certificates in the `certs/` directory:
+- `cert.key` - Private key
+- `cert.crt` - Certificate
+- `cert.pem` - Combined PEM file
+
+#### Step 2: Update Environment Variables
+
+Edit `.env` and ensure these values are set:
+
+```bash
+DOMAIN=localhost                           # Your domain
+API_URL=https://localhost/                 # Note: HTTPS
+DJANGO_CSRF_TRUSTED_ORIGINS=https://localhost,https://127.0.0.1
+DJANGO_CORS_ALLOWED_ORIGINS=https://localhost,https://127.0.0.1
+USE_SELF_SIGNED_CERT=true
+```
+
+#### Step 3: Deploy with HTTPS
+
+```bash
+docker compose up -d
+```
+
+#### Step 4: Access the Application
+
+- **Frontend:** https://localhost
+- **Backend API:** https://localhost/api/
+- **Django Admin:** https://localhost/admin/
+
+**Important:** Your browser will show a security warning because the certificate is self-signed. This is normal and expected. Click "Advanced" and "Proceed to localhost" (or similar) to continue.
+
+#### Why Self-Signed Certificates Show Warnings
+
+Self-signed certificates are not issued by a trusted Certificate Authority (CA), so browsers display warnings. This is perfectly safe for development and testing environments. The connection is still encrypted.
+
+### Option 2: Let's Encrypt (For Production with Real Domain)
+
+For production deployment with a real domain, use Let's Encrypt for free, trusted SSL certificates.
+
+#### Prerequisites
+
+1. A registered domain name
+2. DNS records pointing to your server
+3. Ports 80 and 443 open on your firewall
+4. Valid email address for Let's Encrypt notifications
+
+#### Configuration Steps
+
+1. **Update .env file:**
+   ```bash
+   DOMAIN=yourdomain.com
+   API_URL=https://yourdomain.com/
+   DJANGO_CSRF_TRUSTED_ORIGINS=https://yourdomain.com
+   DJANGO_CORS_ALLOWED_ORIGINS=https://yourdomain.com
+   USE_SELF_SIGNED_CERT=false
+   ACME_EMAIL=admin@yourdomain.com
+   ```
+
+2. **Enable Let's Encrypt in docker-compose.yml:**
+   
+   Uncomment these lines in the Traefik service:
+   ```yaml
+   - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+   - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+   - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+   ```
+   
+   And uncomment the certresolver lines for backend and frontend:
+   ```yaml
+   - "traefik.http.routers.backend-secure.tls.certresolver=letsencrypt"
+   - "traefik.http.routers.frontend-secure.tls.certresolver=letsencrypt"
+   ```
+
+3. **Deploy:**
+   ```bash
+   docker compose up -d
+   ```
+
+Let's Encrypt will automatically obtain and renew certificates.
+
+### Switching Between HTTP and HTTPS
+
+If you need to switch back to HTTP (not recommended):
+
+1. Comment out the HTTPS routers in `docker-compose.yml`
+2. Update `.env`:
+   ```bash
+   API_URL=http://localhost/
+   DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost
+   DJANGO_CORS_ALLOWED_ORIGINS=http://localhost
+   ```
+3. Redeploy: `docker compose up -d`
+
 ## 🔧 Configuration Details
 
 ### Environment Variables
@@ -77,7 +192,7 @@ All configuration is done through environment variables in the `.env` file:
 #### Domain Configuration
 ```bash
 DOMAIN=localhost                    # Your domain name
-API_URL=http://localhost/          # Full API URL for frontend
+API_URL=https://localhost/          # Full API URL for frontend (use https://)
 ```
 
 #### Django Backend
@@ -85,8 +200,8 @@ API_URL=http://localhost/          # Full API URL for frontend
 DJANGO_SECRET_KEY=...              # Django secret key (REQUIRED in production)
 DJANGO_DEBUG=False                 # Debug mode (set to False in production)
 DJANGO_ALLOWED_HOSTS=...           # Comma-separated list of allowed hosts
-DJANGO_CSRF_TRUSTED_ORIGINS=...    # Comma-separated trusted origins
-DJANGO_CORS_ALLOWED_ORIGINS=...    # Comma-separated CORS origins
+DJANGO_CSRF_TRUSTED_ORIGINS=...    # Comma-separated trusted origins (use https://)
+DJANGO_CORS_ALLOWED_ORIGINS=...    # Comma-separated CORS origins (use https://)
 ```
 
 #### Traefik Configuration
@@ -95,6 +210,12 @@ TRAEFIK_HTTP_PORT=80               # HTTP port
 TRAEFIK_HTTPS_PORT=443             # HTTPS port
 TRAEFIK_DASHBOARD_PORT=8080        # Dashboard port
 TRAEFIK_LOG_LEVEL=INFO             # Log level (DEBUG, INFO, WARN, ERROR)
+```
+
+#### SSL/TLS Configuration
+```bash
+USE_SELF_SIGNED_CERT=true          # Use self-signed certificates (true/false)
+ACME_EMAIL=admin@yourdomain.com    # Email for Let's Encrypt (when using real certs)
 ```
 
 ### Production Deployment

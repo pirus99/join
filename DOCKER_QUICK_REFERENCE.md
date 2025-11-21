@@ -2,16 +2,20 @@
 
 ## 🚀 Quick Start Commands
 
-### Initial Deployment
+### Initial Deployment with Self-Signed HTTPS
+
 ```bash
 # 1. Copy and configure environment
 cp .env.example .env
-# Edit .env with your settings
+# Edit .env with your settings (HTTPS is enabled by default)
 
-# 2. Deploy
+# 2. Generate self-signed certificate
+./generate-self-signed-cert.sh
+
+# 3. Deploy
 docker compose up -d --build
 
-# 3. Initialize database and create admin user
+# 4. Initialize database and create admin user
 docker exec -it join-backend python manage.py migrate
 docker exec -it join-backend python manage.py createsuperuser
 ```
@@ -26,10 +30,44 @@ docker exec -it join-backend python manage.py createsuperuser
 ## 📍 Access Points
 
 After deployment, access:
-- **Frontend**: http://localhost
-- **Backend API**: http://localhost/api/
-- **Django Admin**: http://localhost/admin/
+- **Frontend**: https://localhost (or http://localhost for HTTP only)
+- **Backend API**: https://localhost/api/
+- **Django Admin**: https://localhost/admin/
 - **Traefik Dashboard**: http://localhost:8080 (if enabled)
+
+**Note:** Self-signed certificates will show a browser warning. Click "Advanced" and proceed to continue.
+
+## 🔒 SSL/TLS Quick Setup
+
+### Self-Signed Certificate (Development)
+
+```bash
+# Generate certificate
+./generate-self-signed-cert.sh
+
+# Ensure .env has:
+# USE_SELF_SIGNED_CERT=true
+# API_URL=https://localhost/
+# DJANGO_CSRF_TRUSTED_ORIGINS=https://localhost
+# DJANGO_CORS_ALLOWED_ORIGINS=https://localhost
+
+# Deploy
+docker compose up -d
+```
+
+### Let's Encrypt (Production)
+
+```bash
+# 1. Update .env:
+#    DOMAIN=yourdomain.com
+#    API_URL=https://yourdomain.com/
+#    ACME_EMAIL=admin@yourdomain.com
+#    USE_SELF_SIGNED_CERT=false
+
+# 2. Uncomment Let's Encrypt lines in docker-compose.yml
+# 3. Deploy
+docker compose up -d
+```
 
 ## 🔄 Update Deployment
 

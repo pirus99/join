@@ -17,7 +17,10 @@ services:
       # Logging
       - "--log.level=${TRAEFIK_LOG_LEVEL:-INFO}"
       - "--accesslog=true"
-      # Optional: Let's Encrypt SSL (uncomment for production)
+      # File provider for self-signed certificates (used when USE_SELF_SIGNED_CERT=true)
+      - "--providers.file.filename=/etc/traefik/traefik-tls.yml"
+      - "--providers.file.watch=true"
+      # Optional: Let's Encrypt SSL (uncomment for production with real domain)
       # - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
       # - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
       # - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
@@ -28,6 +31,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-certificates:/letsencrypt
+      # Mount self-signed certificates (if USE_SELF_SIGNED_CERT=true)
+      - ./certs:/certificates:ro
+      - ./traefik-tls.yml:/etc/traefik/traefik-tls.yml:ro
     networks:
       - web
     labels:
@@ -49,8 +55,8 @@ services:
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-django-insecure-change-this-in-production}
       - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
       - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-backend,localhost,127.0.0.1}
-      - DJANGO_CSRF_TRUSTED_ORIGINS=${DJANGO_CSRF_TRUSTED_ORIGINS:-http://localhost,http://127.0.0.1}
-      - DJANGO_CORS_ALLOWED_ORIGINS=${DJANGO_CORS_ALLOWED_ORIGINS:-http://localhost,http://127.0.0.1}
+      - DJANGO_CSRF_TRUSTED_ORIGINS=${DJANGO_CSRF_TRUSTED_ORIGINS:-https://localhost,https://127.0.0.1}
+      - DJANGO_CORS_ALLOWED_ORIGINS=${DJANGO_CORS_ALLOWED_ORIGINS:-https://localhost,https://127.0.0.1}
       # Database settings (for future PostgreSQL migration)
       - DB_ENGINE=${DB_ENGINE:-django.db.backends.sqlite3}
       - DB_NAME=${DB_NAME:-db.sqlite3}
@@ -69,10 +75,11 @@ services:
       - "traefik.http.routers.backend.rule=Host(`${BACKEND_HOST:-backend.localhost}`) || (Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`, `/admin`))"
       - "traefik.http.routers.backend.entrypoints=web"
       - "traefik.http.services.backend.loadbalancer.server.port=8000"
-      # Optional: HTTPS router (uncomment for production with SSL)
-      # - "traefik.http.routers.backend-secure.rule=Host(`${BACKEND_HOST:-backend.localhost}`) || (Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`, `/admin`))"
-      # - "traefik.http.routers.backend-secure.entrypoints=websecure"
-      # - "traefik.http.routers.backend-secure.tls=true"
+      # HTTPS router (works with self-signed certs or Let's Encrypt)
+      - "traefik.http.routers.backend-secure.rule=Host(`${BACKEND_HOST:-backend.localhost}`) || (Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`, `/admin`))"
+      - "traefik.http.routers.backend-secure.entrypoints=websecure"
+      - "traefik.http.routers.backend-secure.tls=true"
+      # Uncomment the next line to use Let's Encrypt instead of self-signed certs
       # - "traefik.http.routers.backend-secure.tls.certresolver=letsencrypt"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/admin/"]
@@ -89,7 +96,7 @@ services:
     container_name: join-frontend
     restart: unless-stopped
     environment:
-      - API_URL=${API_URL:-http://localhost/api/v1/}
+      - API_URL=${API_URL:-https://localhost/}
     networks:
       - web
     labels:
@@ -98,10 +105,11 @@ services:
       - "traefik.http.routers.frontend.rule=Host(`${DOMAIN:-localhost}`)"
       - "traefik.http.routers.frontend.entrypoints=web"
       - "traefik.http.services.frontend.loadbalancer.server.port=80"
-      # Optional: HTTPS router (uncomment for production with SSL)
-      # - "traefik.http.routers.frontend-secure.rule=Host(`${DOMAIN:-localhost}`)"
-      # - "traefik.http.routers.frontend-secure.entrypoints=websecure"
-      # - "traefik.http.routers.frontend-secure.tls=true"
+      # HTTPS router (works with self-signed certs or Let's Encrypt)
+      - "traefik.http.routers.frontend-secure.rule=Host(`${DOMAIN:-localhost}`)"
+      - "traefik.http.routers.frontend-secure.entrypoints=websecure"
+      - "traefik.http.routers.frontend-secure.tls=true"
+      # Uncomment the next line to use Let's Encrypt instead of self-signed certs
       # - "traefik.http.routers.frontend-secure.tls.certresolver=letsencrypt"
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]

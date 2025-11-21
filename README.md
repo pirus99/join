@@ -14,21 +14,28 @@ A modern task management application built with Angular frontend and Django REST
 
 ### Production Deployment with Docker 🐳
 
-For production deployment with Docker and Traefik reverse proxy:
+For production deployment with Docker and Traefik reverse proxy with **HTTPS support** (self-signed or Let's Encrypt):
 
 **📖 Documentation:**
 - [Quick Reference Guide](./DOCKER_QUICK_REFERENCE.md) - Commands and common operations
 - [Full Deployment Guide](./DOCKER_DEPLOYMENT.md) - Complete setup and configuration
 
-**🚀 Quick start:**
+**🚀 Quick start with HTTPS:**
 ```bash
 cp .env.example .env
 # Edit .env with your configuration
+
+# Generate self-signed certificate for HTTPS
+./generate-self-signed-cert.sh
+
+# Deploy with HTTPS enabled
 docker compose up -d --build
 
 # Or use the helper script
 ./deploy.sh
 ```
+
+Access your application at **https://localhost** (accepts self-signed certificate warning)
 
 ### Development Setup 💻
 
