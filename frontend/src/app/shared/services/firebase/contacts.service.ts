@@ -33,9 +33,6 @@ export class ContactsService {
 
   singleContact: Contact | undefined;
 
-  /** Firestore instance */
-  firestore: Firestore = inject(Firestore);
-
   /** First name property (legacy, consider removing if unused) */
   firstName: any;
 
