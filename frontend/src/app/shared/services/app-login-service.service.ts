@@ -43,7 +43,7 @@ export class LoginService {
     resetState(): void {
         this.actualLoginSubject.next(false);
         this.loginPageSubject.next(true);
-        this.animateSubject.next(false);
+        this.animateSubject.next(true);
     }
 
     /**

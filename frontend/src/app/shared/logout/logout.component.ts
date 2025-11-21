@@ -60,16 +60,15 @@ export class LogoutComponent {
      * - Resets and verifies login state
      * - Shows a success notification
      */
-    ngOnInit(): void {
-        this.router.navigateByUrl('/');
-        this.userService.logout()
+    async ngOnInit(): Promise<void> {
+        await this.userService.logout();
         this.loggedOut = true;
         this.loginService.resetState();
-        this.loginService.verifyLogIn();
         this.notificationService.pushNotification(
             'Successfully logged out!',
             NotificationType.SUCCESS,
             NotificationPosition.BOTTOM_RIGHT
         );
+        this.router.navigateByUrl('/');
     }
 }
