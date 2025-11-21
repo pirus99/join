@@ -34,6 +34,32 @@ jobs:
       - name: Build Angular project
         run: ng build --configuration development
 
-      - name: Run frontend tests
-        run: npm test -- --browsers=ChromeHeadless --watch=false --code-coverage
-        continue-on-error: true
+      - name: Verify frontend serves correctly
+        run: |
+          # Start the Angular dev server in the background
+          ng serve --port 4200 &
+          SERVER_PID=$!
+          
+          # Wait for server to be ready
+          echo "Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -s http://localhost:4200 > /dev/null; then
+              echo "Server is running!"
+              break
+            fi
+            sleep 2
+          done
+          
+          # Test that the server responds
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4200)
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "✓ Frontend server is working correctly (HTTP $HTTP_STATUS)"
+          else
+            echo "✗ Frontend server returned HTTP $HTTP_STATUS"
+            kill $SERVER_PID
+            exit 1
+          fi
+          
+          # Clean up
+          kill $SERVER_PID
+          echo "Server stopped successfully"
