@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  # Traefik Reverse Proxy
+  traefik:
+    image: traefik:v2.11
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      # Enable Docker provider
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      # Entry points
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Optional: Enable dashboard (remove in production or secure it)
+      - "--api.dashboard=true"
+      - "--api.insecure=${TRAEFIK_DASHBOARD_INSECURE:-false}"
+      # Logging
+      - "--log.level=${TRAEFIK_LOG_LEVEL:-INFO}"
+      - "--accesslog=true"
+      # Optional: Let's Encrypt SSL (uncomment for production)
+      # - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      # - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      # - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "${TRAEFIK_HTTP_PORT:-80}:80"
+      - "${TRAEFIK_HTTPS_PORT:-443}:443"
+      - "${TRAEFIK_DASHBOARD_PORT:-8080}:8080"  # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-certificates:/letsencrypt
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      # Dashboard
+      - "traefik.http.routers.traefik.rule=Host(`${TRAEFIK_DASHBOARD_HOST:-traefik.localhost}`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.entrypoints=web"
+
+  # Backend - Django REST API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: join-backend
+    restart: unless-stopped
+    environment:
+      # Django settings
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-django-insecure-change-this-in-production}
+      - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-backend,localhost,127.0.0.1}
+      - DJANGO_CSRF_TRUSTED_ORIGINS=${DJANGO_CSRF_TRUSTED_ORIGINS:-http://localhost,http://127.0.0.1}
+      - DJANGO_CORS_ALLOWED_ORIGINS=${DJANGO_CORS_ALLOWED_ORIGINS:-http://localhost,http://127.0.0.1}
+      # Database settings (for future PostgreSQL migration)
+      - DB_ENGINE=${DB_ENGINE:-django.db.backends.sqlite3}
+      - DB_NAME=${DB_NAME:-db.sqlite3}
+      - DB_USER=${DB_USER:-}
+      - DB_PASSWORD=${DB_PASSWORD:-}
+      - DB_HOST=${DB_HOST:-}
+      - DB_PORT=${DB_PORT:-}
+    volumes:
+      - backend-data:/app/data
+      - backend-static:/app/staticfiles
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      # HTTP router
+      - "traefik.http.routers.backend.rule=Host(`${BACKEND_HOST:-backend.localhost}`) || (Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`, `/admin`))"
+      - "traefik.http.routers.backend.entrypoints=web"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+      # Optional: HTTPS router (uncomment for production with SSL)
+      # - "traefik.http.routers.backend-secure.rule=Host(`${BACKEND_HOST:-backend.localhost}`) || (Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`, `/admin`))"
+      # - "traefik.http.routers.backend-secure.entrypoints=websecure"
+      # - "traefik.http.routers.backend-secure.tls=true"
+      # - "traefik.http.routers.backend-secure.tls.certresolver=letsencrypt"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/admin/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend - Angular Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: join-frontend
+    restart: unless-stopped
+    environment:
+      - API_URL=${API_URL:-http://localhost/api/v1/}
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      # HTTP router
+      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN:-localhost}`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+      # Optional: HTTPS router (uncomment for production with SSL)
+      # - "traefik.http.routers.frontend-secure.rule=Host(`${DOMAIN:-localhost}`)"
+      # - "traefik.http.routers.frontend-secure.entrypoints=websecure"
+      # - "traefik.http.routers.frontend-secure.tls=true"
+      # - "traefik.http.routers.frontend-secure.tls.certresolver=letsencrypt"
+      # Redirect to backend for API calls
+      - "traefik.http.middlewares.frontend-stripprefix.stripprefix.prefixes=/api,/admin"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - backend
+
+networks:
+  web:
+    driver: bridge
+
+volumes:
+  traefik-certificates:
+  backend-data:
+  backend-static:

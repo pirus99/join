@@ -10,6 +10,25 @@ A modern task management application built with Angular frontend and Django REST
 - **Backend**: Django 5.2.x with Django REST Framework 3.16.x
 - **API**: RESTful API for authentication, tasks, and contacts management
 
+## 🚀 Deployment Options
+
+### Production Deployment with Docker 🐳
+
+For production deployment with Docker and Traefik reverse proxy:
+
+**📖 [See Docker Deployment Guide](./DOCKER_DEPLOYMENT.md)**
+
+Quick start:
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+docker-compose up -d
+```
+
+### Development Setup 💻
+
+For local development without Docker, follow the instructions below.
+
 ## 📋 Prerequisites
 
 Before you begin, ensure you have the following installed on your system:
