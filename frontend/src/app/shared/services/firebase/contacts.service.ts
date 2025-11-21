@@ -2,17 +2,7 @@
  * @fileoverview Contacts service for managing contact data using Firebase Firestore
  */
 
-import { inject, Injectable, OnDestroy } from '@angular/core';
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  Firestore,
-  getDocs,
-  onSnapshot,
-  updateDoc,
-} from '@angular/fire/firestore';
+import { inject, Injectable } from '@angular/core';
 import { Contact } from '../../interfaces/contact';
 import { GlobalConfig } from '../../../global-config';
 import { HttpClient } from '@angular/common/http';
