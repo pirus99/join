@@ -6,7 +6,7 @@ import { Component, Output, EventEmitter, inject, Renderer2 } from '@angular/cor
 import { ButtonComponent } from '../../../../shared/ui/button/button.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { ContactsService } from '../../../../shared/services/firebase/contacts.service';
+import { ContactsService } from '../../../../shared/services/api/contacts.service';
 import { Contact } from '../../../../shared/interfaces/contact';
 import { InitialLettersService } from '../../../../shared/services/get-initial-letters.service';
 import { NotificationService } from '../../../../shared/services/notification.service';

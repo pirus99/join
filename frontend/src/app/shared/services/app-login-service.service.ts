@@ -4,7 +4,7 @@
 
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { UserService } from './firebase/user.service';
+import { UserService } from './api/user.service';
 import { GlobalConfig } from '../../global-config';
 
 /**

@@ -4,14 +4,14 @@
 
 import { Component, inject, OnDestroy } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
-import { ContactsService } from './shared/services/firebase/contacts.service';
+import { ContactsService } from './shared/services/api/contacts.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from './shared/header/header.component';
 import { SidebarComponent } from './shared/sidebar/sidebar.component';
 import { FooterComponent } from './shared/footer/footer.component';
 import { LogInPageComponent } from './features/log-in-page/log-in-page.component';
-import { UserService } from './shared/services/firebase/user.service';
+import { UserService } from './shared/services/api/user.service';
 import { NotificationOutletComponent } from './shared/notification-outlet/notification-outlet/notification-outlet.component';
 import { LoginService } from './shared/services/app-login-service.service';
 import { Subscription } from 'rxjs';

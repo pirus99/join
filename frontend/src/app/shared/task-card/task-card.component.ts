@@ -6,9 +6,9 @@
 import { Component, inject, Input, OnInit, EventEmitter, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Task } from '../interfaces/task';
-import { TaskCategory, TaskPriority } from '../services/firebase/tasks.service';
+import { TaskCategory, TaskPriority } from '../services/api/tasks.service';
 import { Contact } from '../interfaces/contact';
-import { ContactsService } from '../services/firebase/contacts.service';
+import { ContactsService } from '../services/api/contacts.service';
 import { InitialLettersService } from '../services/get-initial-letters.service';
 import { ColoredProfilePipe } from '../pipes/colored-profile.pipe';
 import { TruncateStringPipe } from '../pipes/truncate-string.pipe';

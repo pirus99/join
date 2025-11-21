@@ -1,5 +1,5 @@
 /**
- * @fileoverview Contacts service for managing contact data using Firebase Firestore
+ * @fileoverview Contacts service for managing contact data using REST API
  */
 
 import { inject, Injectable } from '@angular/core';
@@ -9,7 +9,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
 
 /**
- * Service for managing contacts using Firebase Firestore
+ * Service for managing contacts using REST API
  * @injectable
  */
 @Injectable({
@@ -91,7 +91,7 @@ export class ContactsService {
   }
 
   /**
-   * Deletes a contact from Firestore
+   * Deletes a contact from the database
    * @param {string} contactId - ID of contact to delete
    * @returns {Promise<void>} Promise that resolves when deletion is complete
    */
@@ -110,7 +110,7 @@ export class ContactsService {
   }
 
   /**
-   * Updates an existing contact in the Firestore database.
+   * Updates an existing contact in the database.
    * @param {object} contact - An object containing the updated contact fields.
    * @param {string} id - The unique ID of the contact to update.
    * @throws Will throw an error if the contact ID is not provided.
@@ -133,7 +133,7 @@ export class ContactsService {
   }
 
   /**
-   * Adds a new contact to Firestore database
+   * Adds a new contact to database
    * @param {Contact} contact - Contact object to add (ID will be auto-generated)
    * @returns {Promise<void>} Promise that resolves when contact is added
    */

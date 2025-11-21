@@ -13,14 +13,14 @@ import {
 import { CommonModule } from '@angular/common';
 import { Task } from '../interfaces/task';
 import { Contact } from '../interfaces/contact';
-import { ContactsService } from '../services/firebase/contacts.service';
+import { ContactsService } from '../services/api/contacts.service';
 import { InitialLettersService } from '../services/get-initial-letters.service';
 import { ColoredProfilePipe } from '../pipes/colored-profile.pipe';
 import {
   TaskCategory,
   TasksService,
   TaskPriority,
-} from '../services/firebase/tasks.service';
+} from '../services/api/tasks.service';
 import { SVGInlineService } from '../services/svg-inline.service';
 import { SafeHtml, DomSanitizer } from '@angular/platform-browser';
 import { AddTaskComponent } from '../add-task/add-task.component';

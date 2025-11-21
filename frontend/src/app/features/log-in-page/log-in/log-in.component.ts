@@ -5,10 +5,10 @@
 import { Component, EventEmitter, inject, Input, Output, ElementRef, ViewChild } from '@angular/core';
 import { FormControl, FormsModule, NgForm } from '@angular/forms';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
-import { UserService } from '../../../shared/services/firebase/user.service';
+import { UserService } from '../../../shared/services/api/user.service';
 import { Router, RouterLink } from '@angular/router';
 import { LoginService } from '../../../shared/services/app-login-service.service';
-import { ContactsService } from '../../../shared/services/firebase/contacts.service';
+import { ContactsService } from '../../../shared/services/api/contacts.service';
 import { Contact } from '../../../shared/interfaces/contact';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { NotificationType, NotificationPosition } from '../../../shared/interfaces/notification';
