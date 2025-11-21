@@ -4,11 +4,11 @@
 
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { TasksService, TaskStatus, TaskPriority } from '../../shared/services/firebase/tasks.service';
-import { Task } from '../../shared/services/firebase/tasks.service';
+import { TasksService, TaskStatus, TaskPriority } from '../../shared/services/api/tasks.service';
+import { Task } from '../../shared/services/api/tasks.service';
 import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
-import { UserService } from '../../shared/services/firebase/user.service';
+import { UserService } from '../../shared/services/api/user.service';
 
 /**
  * Summary dashboard component showing task statistics and greetings

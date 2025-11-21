@@ -4,7 +4,7 @@
 
 import { inject, Injectable } from '@angular/core';
 import { CanActivateFn } from '@angular/router';
-import { UserService } from '../services/firebase/user.service';
+import { UserService } from '../services/api/user.service';
 import { map } from 'rxjs';
 import { LoginService } from '../services/app-login-service.service';
 

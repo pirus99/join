@@ -13,7 +13,7 @@ import {
     CdkDropListGroup,
 } from '@angular/cdk/drag-drop';
 import { TaskCardComponent } from '../../shared/task-card/task-card.component';
-import { TasksService } from '../../shared/services/firebase/tasks.service';
+import { TasksService } from '../../shared/services/api/tasks.service';
 import { Task } from '../../shared/interfaces/task';
 import { TaskCardModalComponent } from '../../shared/task-card-modal/task-card-modal.component';
 import { AddTaskModalComponent } from '../../shared/add-task-modal/add-task-modal.component';

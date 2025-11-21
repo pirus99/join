@@ -12,7 +12,7 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ContactsService } from '../../services/firebase/contacts.service';
+import { ContactsService } from '../../services/api/contacts.service';
 import { Contact } from '../../interfaces/contact';
 import { CommonModule } from '@angular/common';
 import { ColoredProfilePipe } from '../../pipes/colored-profile.pipe';

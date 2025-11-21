@@ -8,7 +8,7 @@ import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { LoginService } from '../services/app-login-service.service';
-import { UserService } from '../services/firebase/user.service';
+import { UserService } from '../services/api/user.service';
 
 /**
  * Application header component with help navigation and user profile

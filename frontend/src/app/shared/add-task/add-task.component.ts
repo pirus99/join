@@ -7,11 +7,11 @@ import { Component, inject, Input, Output, ViewChild, EventEmitter } from '@angu
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatSelectModule } from '@angular/material/select';
 import { ButtonComponent } from '../ui/button/button.component';
-import { ContactsService } from '../services/firebase/contacts.service';
+import { ContactsService } from '../services/api/contacts.service';
 import { InitialLettersService } from '../services/get-initial-letters.service';
 import { AssignContactInputComponent } from '../ui/assign-contact-input/assign-contact-input.component';
 import { AssignSubtaskInputComponent } from '../ui/assign-subtask-input/assign-subtask-input.component';
-import { TasksService } from '../services/firebase/tasks.service';
+import { TasksService } from '../services/api/tasks.service';
 import { Task } from '../interfaces/task';
 import { DatePickerInputComponent } from '../ui/date-picker-input/date-picker-input.component';
 import { ActivatedRoute, Router } from '@angular/router';

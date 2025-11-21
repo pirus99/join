@@ -3,7 +3,7 @@
  */
 
 import { Component, inject, OnDestroy } from '@angular/core';
-import { UserService } from '../services/firebase/user.service';
+import { UserService } from '../services/api/user.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { LoginService } from '../services/app-login-service.service';

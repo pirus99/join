@@ -4,7 +4,7 @@
 
 import { Component, Input, Output, EventEmitter, Renderer2, inject } from '@angular/core';
 import { Contact } from '../../../../shared/interfaces/contact';
-import { ContactsService } from '../../../../shared/services/firebase/contacts.service';
+import { ContactsService } from '../../../../shared/services/api/contacts.service';
 import { ButtonComponent } from '../../../../shared/ui/button/button.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
