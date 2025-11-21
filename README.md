@@ -1,4 +1,4 @@
-[![Build and deploy](https://github.com/Loqicx/join/actions/workflows/main.yml/badge.svg)](https://github.com/Loqicx/join/actions/workflows/main.yml)
+[![Build and test](https://github.com/Loqicx/join/actions/workflows/main.yml/badge.svg)](https://github.com/Loqicx/join/actions/workflows/main.yml)
 
 # Join
 

@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { GetInitialLettersService } from './get-initial-letters.service';
+import { InitialLettersService } from './get-initial-letters.service';
 
-describe('GetInitialLettersService', () => {
-  let service: GetInitialLettersService;
+describe('InitialLettersService', () => {
+  let service: InitialLettersService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(GetInitialLettersService);
+    service = TestBed.inject(InitialLettersService);
   });
 
   it('should be created', () => {

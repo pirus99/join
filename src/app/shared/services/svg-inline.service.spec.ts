@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { SvgInlineService } from './svg-inline.service';
+import { SVGInlineService } from './svg-inline.service';
 
-describe('SvgInlineService', () => {
-  let service: SvgInlineService;
+describe('SVGInlineService', () => {
+  let service: SVGInlineService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(SvgInlineService);
+    service = TestBed.inject(SVGInlineService);
   });
 
   it('should be created', () => {

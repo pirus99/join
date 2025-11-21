@@ -1,90 +1,29 @@
-name: Build and deploy
+name: Build and test
 
 on:
   workflow_dispatch:
-    inputs:
-      release_type:
-        type: choice
-        description: "Release type (major, minor or bugfix, eg. 1.2.1 => major.minor.bugfix)"
-        required: true
-        default: "bugfix"
-        options:
-          - major
-          - minor
-          - bugfix
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
 
 jobs:
-  deploy:
+  build-and-test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      tag: ${{ steps.create_tag.outputs.tag }}
 
     steps:
-      - name: Checkout main
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - name: Set Git user
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-
-      - name: Get latest tag
-        id: get_tag
-        run: |
-          git fetch --tags
-          latest_tag=$(git tag --sort=-v:refname | head -n 1)
-          echo "Latest tag: $latest_tag"
-          echo "latest_tag=$latest_tag" >> $GITHUB_OUTPUT
-
-      - name: Calculate next version
-        id: next_version
-        run: |
-          latest=${{ steps.get_tag.outputs.latest_tag }}
-          if [[ -z "$latest" ]]; then
-            latest="0.0.0"
-          fi
-          IFS='.' read -r major minor patch <<< "$latest"
-          case "${{ github.event.inputs.release_type }}" in
-            major)
-              major=$((major+1))
-              minor=0
-              patch=0
-              ;;
-            minor)
-              minor=$((minor+1))
-              patch=0
-              ;;
-            bugfix)
-              patch=$((patch+1))
-              ;;
-            *)
-              echo "Unknown release type!"; exit 1
-              ;;
-          esac
-          next="$major.$minor.$patch"
-          echo "Next version: $next"
-          echo "next_version=$next" >> $GITHUB_OUTPUT
-
-      - name: Create release branch
-        id: create_branch
-        run: |
-          branch="release/v${{ steps.next_version.outputs.next_version }}"
-          git checkout -b $branch
-          echo "branch=$branch" >> $GITHUB_OUTPUT
-
-      - name: Push release branch
-        run: |
-          git push origin HEAD
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22.14.0"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -93,49 +32,7 @@ jobs:
         run: npm install -g @angular/cli
 
       - name: Build Angular project
-        run: ng build --base-href /angular-projects/join-mmc/
+        run: ng build --configuration development
 
-      - name: Create and push tag
-        id: create_tag
-        run: |
-          git tag ${{ steps.next_version.outputs.next_version }}
-          git push origin ${{ steps.next_version.outputs.next_version }}
-          echo "tag=${{ steps.next_version.outputs.next_version }}" >> $GITHUB_OUTPUT
-
-      - name: Deploy to FTP server
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: "./dist/join/browser/"
-          server-dir: "/angular-projects/join-mmc/"
-          protocol: "ftp"
-
-      - name: Delete remote release branch
-        run: |
-          git push origin --delete ${{ steps.create_branch.outputs.branch }}
-
-  cleanup:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    needs: deploy
-    if: failure()
-    steps:
-      - name: Checkout main
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - name: Set Git user
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-
-      - name: Delete tag if created
-        if: ${{ needs.deploy.outputs.tag != '' }}
-        run: |
-          git push origin :refs/tags/${{ needs.deploy.outputs.tag }}
-          git tag -d ${{ needs.deploy.outputs.tag }}
+      - name: Run frontend tests
+        run: npm test -- --browsers=ChromeHeadless --watch=false --code-coverage
