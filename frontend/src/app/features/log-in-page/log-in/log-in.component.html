@@ -1,0 +1,170 @@
+<div class="logIn-wrapper">
+    <div class="logIn-content">
+        <div class="logIn-title">
+            @if (!signUpShow) {
+            <h1 class="logIn-title">Log in</h1>
+            } @else {
+                <h1 class="logIn-title">Sign up</h1>
+            }
+            <div class="blue-underline"></div>
+        </div>
+        <div class="logIn-window">
+            @if (!signUpShow) {
+            <form class="logIn-form" (ngSubmit)="logIn(this.logInEmail, this.logInPassword)" #logInForm="ngForm">
+                <div class="input-wrapper">
+                    <input
+                        type="text"
+                        class="input-sm border blue-focus"
+                        name="email"
+                        placeholder="Email"
+                        required
+                        [(ngModel)]="logInEmail"
+                        #logInEmailVar="ngModel"
+                        [class.red-border]="warn || userService.credentialFault"
+                        autocomplete="email"
+                    />
+                    <img class="input-icon" src="assets/icons/mail.svg" alt="E-Mail icon">
+                </div>
+                <div class="input-wrapper">
+                    <input
+                        type="{{inputType}}"
+                        class="input-sm border blue-focus"
+                        name="password"
+                        placeholder="Password"
+                        required
+                        [(ngModel)]="logInPassword"
+                        #logInPasswordVar="ngModel"
+                        #passwordField
+                        [class.red-border]="warn || userService.credentialFault"
+                    />
+                    <img class="input-icon" (click)="togglePasswordVisibility()" [class.d-none]="inputType === 'text'" src="assets/icons/lock.svg" alt="Password icon">
+                    <img class="input-icon" (click)="togglePasswordVisibility()" [class.d-none]="inputType === 'password'" src="assets/icons/visibility_off.svg" alt="Password icon">
+                    <div class="warn-text" [class.opacity-1]="warn || userService.credentialFault">Check your email and password. Please try again.</div>
+                </div>
+                <div class="button-wrapper desktop">
+                    <app-button [type]="'submit'">Log in</app-button>
+                    <app-button [invert]="true" (btnClick)="this.loginGuest()">Guest Log in</app-button>
+                </div>
+                <div class="button-wrapper mobile">
+                    <app-button [type]="'submit'" [size]="'large'" [fontSize]="'20px'">Log in</app-button>
+                    <div class="spacer"></div>
+                    <app-button [invert]="true" [size]="'large'" [fontSize]="'20px'"  (btnClick)="this.loginGuest()">Guest Log in</app-button>
+                </div>
+            </form>
+        } @else {
+            <div class="back-button">
+            <app-button [border]="false" [round]="true" [invert]="true" (btnClick)="signUpShow = false; closeSignUp()" [iconSrc]="'assets/icons/arrow_back.svg'"></app-button>
+            </div>
+            <form class="signUp-form" (ngSubmit)="signUp(signUpForm)" #signUpForm="ngForm">
+                <div class="input-wrapper">
+                    <input
+                        type="text"
+                        class="input-sm border blue-focus"
+                        name="name"
+                        placeholder="Name"
+                        required
+                        minlength="3"
+                        pattern="^[A-Za-zÄÖÜäöüß]{3,}\s[A-Za-zÄÖÜäöüß]{2,}$"
+                        [(ngModel)]="signUpName"
+                        #signUpNameVar="ngModel"
+                        [class.red-border]="signUpNameVar.invalid && signUpForm.submitted"
+                        autocomplete="cc-name"
+                    />
+                    <img class="input-icon" src="assets/icons/person.svg" alt="E-Mail icon">
+                    @if (signUpNameVar.invalid && signUpForm.submitted) {
+                        @if (signUpNameVar.hasError('minlength') || signUpNameVar.hasError('required')) {
+                            <div class="warn-text" [class.opacity-1]="true">Name must be at least 6 characters long.</div>
+                        } @else if (signUpNameVar.hasError('pattern')) {
+                            <div class="warn-text" [class.opacity-1]="true">Name must be in format 'First Last'.</div>
+                        }
+                    }
+                </div>
+                <div class="input-wrapper">
+                    <input
+                        type="email"
+                        class="input-sm border blue-focus"
+                        name="email"
+                        placeholder="Email"
+                        required
+                        email
+                        [(ngModel)]="signUpEmail"
+                        #signUpEmailVar="ngModel"
+                        [class.red-border]="signUpEmailVar.invalid && signUpForm.submitted || userService.emailFault"
+                        autocomplete="email"
+                    />
+                    <img class="input-icon" src="assets/icons/mail.svg" alt="E-Mail icon">
+                    @if (signUpEmailVar.invalid && signUpForm.submitted || userService.emailFault) {
+                        @if (signUpEmailVar.hasError('required')) {
+                            <div class="warn-text" [class.opacity-1]="true">Email is required.</div>
+                        } @else if (signUpEmailVar.hasError('email')) {
+                            <div class="warn-text" [class.opacity-1]="true">Email must be a valid email address.</div>
+                        } @else if (userService.emailFault) {
+                            <div class="warn-text" [class.opacity-1]="true">Email already created User Account</div>
+                        }
+                    }
+                </div>
+                <div class="input-wrapper">
+                    <input
+                        type="password"
+                        class="input-sm border blue-focus"
+                        name="password1"
+                        type="{{inputTypePW1}}"
+                        placeholder="Password"
+                        required
+                        minlength="8"
+                        pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+                        [(ngModel)]="signUpPassword1"
+                        #signUpPassword1Var="ngModel"
+                        [class.red-border]="signUpPassword1Var.invalid && signUpForm.submitted"
+                    />
+                    <img class="input-icon" (click)="togglePasswordVisibilityPW1()" [class.d-none]="inputTypePW1 === 'text'" src="assets/icons/lock.svg" alt="Password icon">
+                    <img class="input-icon" (click)="togglePasswordVisibilityPW1()" [class.d-none]="inputTypePW1 === 'password'" src="assets/icons/visibility_off.svg" alt="Password icon">
+                    @if (signUpPassword1Var.invalid && signUpForm.submitted) {
+                        @if (signUpPassword1Var.hasError('required')) {
+                            <div class="warn-text" [class.opacity-1]="true">Password is required.</div>
+                        } @else if (signUpPassword1Var.hasError('minlength')) {
+                            <div class="warn-text" [class.opacity-1]="true">Password must be at least 8 characters long.</div>
+                        } @else if (signUpPassword1Var.hasError('pattern')) {
+                            <div class="warn-text" [class.opacity-1]="true">Password must include at least one uppercase letter, one lowercase letter, and one number.</div>
+                        } 
+                    }
+                </div>
+                <div class="input-wrapper">
+                    <input
+                        type="{{inputTypePW2}}"
+                        class="input-sm border blue-focus"
+                        name="password2"
+                        placeholder="Confirm Password"
+                        required
+                        [(ngModel)]="signUpPassword2"
+                        #signUpPassword2Var="ngModel"
+                        [class.red-border]="(signUpPassword1 !== signUpPassword2) && signUpForm.submitted"
+                    />
+                    <img class="input-icon" (click)="togglePasswordVisibilityPW2()" [class.d-none]="inputTypePW2 === 'text'" src="assets/icons/lock.svg" alt="Password icon">
+                    <img class="input-icon" (click)="togglePasswordVisibilityPW2()" [class.d-none]="inputTypePW2 === 'password'" src="assets/icons/visibility_off.svg" alt="Password icon">
+                    <div class="warn-text" [class.opacity-1]="(signUpPassword1 !== signUpPassword2) && signUpForm.submitted">Your passwords don't match. Please try again.</div>
+                </div>
+                <div class="input-wrapper check">
+                    <div class="privacy-checkdiv" (click)="toggleCheckBox()">
+                        <div class="box" id="privacySelectBox" [class.active]="privacyCheckbox"></div>
+                        <div class="checkmark-slide">
+                            <div class="checkmark-wrap" id="privacySelectCheckWrap" [class.active]="privacyCheckbox">
+                                <img src="assets/icons/check_pri.svg" class="checkmark" alt="Checkmark">
+                            </div>
+                        </div>
+                    </div>
+                    <span>I accept the <a routerLink="/privacy" (click)="this.logInService.showRouter()" class="blue-link">Privacy policy</a></span>
+                </div>
+                @if (warnSignUpPrivacy && signUpForm.submitted) {
+                    <div class="flex-center">
+                        <div class="warn-text" [class.opacity-1]="true">You must accept the privacy policy.</div>
+                    </div>
+                }
+                <div class="button-wrapper">
+                    <app-button [type]="'submit'">Sign up</app-button>
+                </div>
+            </form>
+        }
+        </div>
+    </div>
+</div>
