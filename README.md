@@ -16,13 +16,18 @@ A modern task management application built with Angular frontend and Django REST
 
 For production deployment with Docker and Traefik reverse proxy:
 
-**📖 [See Docker Deployment Guide](./DOCKER_DEPLOYMENT.md)**
+**📖 Documentation:**
+- [Quick Reference Guide](./DOCKER_QUICK_REFERENCE.md) - Commands and common operations
+- [Full Deployment Guide](./DOCKER_DEPLOYMENT.md) - Complete setup and configuration
 
-Quick start:
+**🚀 Quick start:**
 ```bash
 cp .env.example .env
 # Edit .env with your configuration
-docker-compose up -d
+docker compose up -d --build
+
+# Or use the helper script
+./deploy.sh
 ```
 
 ### Development Setup 💻
