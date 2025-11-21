@@ -84,10 +84,16 @@ export class TasksService {
    * Initializes the service and subscribes to the tasks collection.
    */
   constructor() {
-    this.getTasks();
-    this.autoFetch = setInterval(() => {
+    if (GlobalConfig.token != null && GlobalConfig.token) {
       this.getTasks();
-    }, 10000);
+      this.autoFetch = setInterval(() => {
+        if (!GlobalConfig.token || GlobalConfig.token === 'undefined') {
+          clearInterval(this.autoFetch);
+          return;
+        }
+        this.getTasks();
+      }, 10000);
+    }
   }
 
   /**
