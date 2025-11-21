@@ -10,6 +10,37 @@ A modern task management application built with Angular frontend and Django REST
 - **Backend**: Django 5.2.x with Django REST Framework 3.16.x
 - **API**: RESTful API for authentication, tasks, and contacts management
 
+## 🚀 Deployment Options
+
+### Production Deployment with Docker 🐳
+
+For production deployment with Docker and Traefik reverse proxy with **HTTPS support** (self-signed or Let's Encrypt):
+
+**📖 Documentation:**
+- [Quick Reference Guide](./DOCKER_QUICK_REFERENCE.md) - Commands and common operations
+- [Full Deployment Guide](./DOCKER_DEPLOYMENT.md) - Complete setup and configuration
+
+**🚀 Quick start with HTTPS:**
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+
+# Generate self-signed certificate for HTTPS
+./generate-self-signed-cert.sh
+
+# Deploy with HTTPS enabled
+docker compose up -d --build
+
+# Or use the helper script
+./deploy.sh
+```
+
+Access your application at **https://localhost** (accepts self-signed certificate warning)
+
+### Development Setup 💻
+
+For local development without Docker, follow the instructions below.
+
 ## 📋 Prerequisites
 
 Before you begin, ensure you have the following installed on your system:

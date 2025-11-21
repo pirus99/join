@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +21,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ye%n9f$ip*6ol0#+wq6m!+==etq%whe)o4g6ix9=s8czd14s^x'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-ye%n9f$ip*6ol0#+wq6m!+==etq%whe)o4g6ix9=s8czd14s^x')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
 
 
 # Application definition
@@ -57,15 +59,12 @@ MIDDLEWARE = [
 
 CSRF_COOKIE_HTTPONLY = True  
 
-CSRF_TRUSTED_ORIGINS = [
-  'http://127.0.0.1:4200',
-  'http://localhost:4200',
-]
+# Read from environment variable or use default
+CSRF_TRUSTED_ORIGINS_ENV = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', 'http://127.0.0.1:4200,http://localhost:4200')
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS_ENV.split(',') if origin.strip()]
 
-CORS_ALLOWED_ORIGINS = [
-  'http://127.0.0.1:4200',
-  'http://localhost:4200',
-]
+CORS_ALLOWED_ORIGINS_ENV = os.environ.get('DJANGO_CORS_ALLOWED_ORIGINS', 'http://127.0.0.1:4200,http://localhost:4200')
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS_ENV.split(',') if origin.strip()]
 
 ROOT_URLCONF = 'core.urls'
 
@@ -90,12 +89,36 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Support for environment-based database configuration
+DB_ENGINE = os.environ.get('DB_ENGINE', 'django.db.backends.sqlite3')
+
+if DB_ENGINE == 'django.db.backends.sqlite3':
+    # Validate DB_NAME to prevent path traversal
+    db_name = os.environ.get('DB_NAME', 'db.sqlite3')
+    # Remove any path separators for security
+    db_name = os.path.basename(db_name)
+    if not db_name:
+        db_name = 'db.sqlite3'
+    
+    DATABASES = {
+        'default': {
+            'ENGINE': DB_ENGINE,
+            'NAME': BASE_DIR / 'data' / db_name,
+        }
     }
-}
+    # Create data directory if it doesn't exist
+    (BASE_DIR / 'data').mkdir(exist_ok=True)
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': DB_ENGINE,
+            'NAME': os.environ.get('DB_NAME', ''),
+            'USER': os.environ.get('DB_USER', ''),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', ''),
+            'PORT': os.environ.get('DB_PORT', ''),
+        }
+    }
 
 
 # Password validation
@@ -133,6 +156,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
