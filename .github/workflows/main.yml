@@ -1,141 +1,114 @@
-name: Build and deploy
+name: Build and Test
 
 on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
   workflow_dispatch:
-    inputs:
-      release_type:
-        type: choice
-        description: "Release type (major, minor or bugfix, eg. 1.2.1 => major.minor.bugfix)"
-        required: true
-        default: "bugfix"
-        options:
-          - major
-          - minor
-          - bugfix
 
 jobs:
-  deploy:
+  frontend-build:
+    name: Frontend Build Check
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      tag: ${{ steps.create_tag.outputs.tag }}
 
     steps:
-      - name: Checkout main
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - name: Set Git user
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-
-      - name: Get latest tag
-        id: get_tag
-        run: |
-          git fetch --tags
-          latest_tag=$(git tag --sort=-v:refname | head -n 1)
-          echo "Latest tag: $latest_tag"
-          echo "latest_tag=$latest_tag" >> $GITHUB_OUTPUT
-
-      - name: Calculate next version
-        id: next_version
-        run: |
-          latest=${{ steps.get_tag.outputs.latest_tag }}
-          if [[ -z "$latest" ]]; then
-            latest="0.0.0"
-          fi
-          IFS='.' read -r major minor patch <<< "$latest"
-          case "${{ github.event.inputs.release_type }}" in
-            major)
-              major=$((major+1))
-              minor=0
-              patch=0
-              ;;
-            minor)
-              minor=$((minor+1))
-              patch=0
-              ;;
-            bugfix)
-              patch=$((patch+1))
-              ;;
-            *)
-              echo "Unknown release type!"; exit 1
-              ;;
-          esac
-          next="$major.$minor.$patch"
-          echo "Next version: $next"
-          echo "next_version=$next" >> $GITHUB_OUTPUT
-
-      - name: Create release branch
-        id: create_branch
-        run: |
-          branch="release/v${{ steps.next_version.outputs.next_version }}"
-          git checkout -b $branch
-          echo "branch=$branch" >> $GITHUB_OUTPUT
-
-      - name: Push release branch
-        run: |
-          git push origin HEAD
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22.14.0"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
+        working-directory: ./frontend
         run: npm ci
 
-      - name: Install Angular CLI
-        run: npm install -g @angular/cli
-
       - name: Build Angular project
-        run: ng build --base-href /angular-projects/join-mmc/
+        working-directory: ./frontend
+        run: npm run build -- --optimization=false
 
-      - name: Create and push tag
-        id: create_tag
+      - name: Check build artifacts
+        working-directory: ./frontend
         run: |
-          git tag ${{ steps.next_version.outputs.next_version }}
-          git push origin ${{ steps.next_version.outputs.next_version }}
-          echo "tag=${{ steps.next_version.outputs.next_version }}" >> $GITHUB_OUTPUT
+          if [ ! -d "dist/join" ]; then
+            echo "Build failed: dist/join directory not found"
+            exit 1
+          fi
+          echo "Frontend build successful!"
 
-      - name: Deploy to FTP server
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: "./dist/join/browser/"
-          server-dir: "/angular-projects/join-mmc/"
-          protocol: "ftp"
-
-      - name: Delete remote release branch
-        run: |
-          git push origin --delete ${{ steps.create_branch.outputs.branch }}
-
-  cleanup:
+  backend-test:
+    name: Backend API Test
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    needs: deploy
-    if: failure()
+
     steps:
-      - name: Checkout main
+      - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          ref: main
-          fetch-depth: 0
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
 
-      - name: Set Git user
+      - name: Install backend dependencies
+        working-directory: ./backend
         run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
+          pip install -r requirements.txt
 
-      - name: Delete tag if created
-        if: ${{ needs.deploy.outputs.tag != '' }}
+      - name: Run database migrations
+        working-directory: ./backend
         run: |
-          git push origin :refs/tags/${{ needs.deploy.outputs.tag }}
-          git tag -d ${{ needs.deploy.outputs.tag }}
+          python manage.py migrate
+
+      - name: Start Django test server
+        working-directory: ./backend
+        run: |
+          python manage.py runserver 0.0.0.0:8000 &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+          echo "Django server started with PID: $SERVER_PID"
+
+      - name: Wait for server to start
+        run: |
+          timeout 30 bash -c 'until curl -f http://localhost:8000/admin/ > /dev/null 2>&1; do sleep 1; done' || (echo "Server failed to start" && exit 1)
+          echo "Server is ready!"
+
+      - name: Test API endpoints
+        run: |
+          echo "Testing backend API endpoints..."
+          
+          # Test admin endpoint (should redirect)
+          echo "Testing /admin/ endpoint..."
+          curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/admin/ | grep -E "200|302" > /dev/null || (echo "Failed to reach /admin/" && exit 1)
+          echo "✓ Admin endpoint accessible"
+          
+          # Test auth endpoints
+          echo "Testing /api/v1/auth/users/ endpoint..."
+          curl -f http://localhost:8000/api/v1/auth/users/ > /dev/null 2>&1 || (echo "Failed to reach /api/v1/auth/users/" && exit 1)
+          echo "✓ Auth users endpoint accessible"
+          
+          # Test task endpoint
+          echo "Testing /api/v1/task/ endpoint..."
+          curl -f http://localhost:8000/api/v1/task/ > /dev/null 2>&1 || (echo "Failed to reach /api/v1/task/" && exit 1)
+          echo "✓ Task endpoint accessible"
+          
+          # Test contact endpoint
+          echo "Testing /api/v1/contact/ endpoint..."
+          curl -f http://localhost:8000/api/v1/contact/ > /dev/null 2>&1 || (echo "Failed to reach /api/v1/contact/" && exit 1)
+          echo "✓ Contact endpoint accessible"
+          
+          echo ""
+          echo "All endpoint tests passed!"
+
+      - name: Stop Django server
+        if: always()
+        run: |
+          if [ ! -z "$SERVER_PID" ]; then
+            kill $SERVER_PID || true
+            echo "Django server stopped"
+          fi
