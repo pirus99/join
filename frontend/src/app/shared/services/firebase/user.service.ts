@@ -1,5 +1,5 @@
 /**
- * @fileoverview User authentication service using Firebase Auth
+ * @fileoverview User authentication service using REST API
  */
 
 import { inject, Injectable } from '@angular/core';
@@ -11,7 +11,7 @@ import { NotificationService } from '../notification.service';
 import { NotificationType, NotificationPosition } from '../../../shared/interfaces/notification';
 
 /**
- * Service for user authentication and management using Firebase
+ * Service for user authentication and management using REST API
  * @injectable
  */
 @Injectable({
@@ -33,7 +33,7 @@ export class UserService {
     notify = inject(NotificationService);
 
     /**
-     * Creates an instance of UserService and sets up authentication persistence
+     * Creates an instance of UserService and sets up authentication state
      */
     constructor() {
         this.user = sessionStorage.getItem('user') ? JSON.parse(sessionStorage.getItem('user')!) : null;

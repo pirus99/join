@@ -1,5 +1,5 @@
 /**
- * @fileoverview Tasks service for managing task data using Firebase Firestore
+ * @fileoverview Tasks service for managing task data using REST API
  */
 
 import { inject, Injectable } from '@angular/core';
@@ -49,7 +49,7 @@ export enum TaskStatus {
 }
 
 /**
- * Service for managing tasks using Firebase Firestore
+ * Service for managing tasks using REST API
  * @injectable
  */
 @Injectable({
@@ -81,7 +81,7 @@ export class TasksService {
   public tasks$: Observable<Task[]> = this.tasksSubject.asObservable();
 
   /**
-   * Initializes the service and subscribes to the tasks collection.
+   * Initializes the service and subscribes to the tasks.
    */
   constructor() {
     if (GlobalConfig.token != null && GlobalConfig.token) {

@@ -7,7 +7,6 @@ import { Subscription } from 'rxjs';
 import { TasksService, TaskStatus, TaskPriority } from '../../shared/services/firebase/tasks.service';
 import { Task } from '../../shared/services/firebase/tasks.service';
 import { RouterLink } from '@angular/router';
-import { Timestamp } from '@angular/fire/firestore';
 import { DatePipe } from '@angular/common';
 import { UserService } from '../../shared/services/firebase/user.service';
 
@@ -135,11 +134,10 @@ export class SummaryComponent implements OnInit, OnDestroy {
 
   /**
    * Convert various dueDate types to timestamp
-   * @param due Due date in Timestamp, Date or string
+   * @param due Due date in Date or string format
    * @returns Milliseconds since epoch or NaN
    */
   private getTime(due: any): number {
-    if (due instanceof Timestamp) return due.toDate().getTime();
     if (due instanceof Date) return due.getTime();
     if (typeof due === 'string') {
       const parsed = new Date(due);
