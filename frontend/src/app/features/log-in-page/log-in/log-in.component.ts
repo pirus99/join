@@ -128,7 +128,7 @@ export class LogInComponent {
     router = inject(Router);
 
     ngOnInit() {
-        if (GlobalConfig.token !== null) {
+        if (GlobalConfig.token && sessionStorage.getItem('authToken')) {
             this.contactsService.getContacts();
         }
     }
@@ -147,6 +147,7 @@ export class LogInComponent {
         await this.userService.login(mail, pw)
         this.router.navigate(['/summary']);
         this.logInService.verifyLogIn();
+        this.contactsService.getContacts();
     }
 
     /**
