@@ -93,10 +93,17 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DB_ENGINE = os.environ.get('DB_ENGINE', 'django.db.backends.sqlite3')
 
 if DB_ENGINE == 'django.db.backends.sqlite3':
+    # Validate DB_NAME to prevent path traversal
+    db_name = os.environ.get('DB_NAME', 'db.sqlite3')
+    # Remove any path separators for security
+    db_name = os.path.basename(db_name)
+    if not db_name:
+        db_name = 'db.sqlite3'
+    
     DATABASES = {
         'default': {
             'ENGINE': DB_ENGINE,
-            'NAME': BASE_DIR / 'data' / os.environ.get('DB_NAME', 'db.sqlite3'),
+            'NAME': BASE_DIR / 'data' / db_name,
         }
     }
     # Create data directory if it doesn't exist

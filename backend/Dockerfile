@@ -13,6 +13,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     postgresql-client \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -23,8 +24,9 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 # Copy project
 COPY . .
 
-# Collect static files
-RUN python manage.py collectstatic --noinput || true
+# Collect static files (with better error handling)
+RUN python manage.py collectstatic --noinput --clear 2>&1 | tee /tmp/collectstatic.log || \
+    (echo "Warning: collectstatic had issues, check /tmp/collectstatic.log" && cat /tmp/collectstatic.log)
 
 # Create a non-root user
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
