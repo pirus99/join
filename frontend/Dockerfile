@@ -18,8 +18,12 @@ RUN npm ci --legacy-peer-deps
 COPY . .
 
 # Update global-config.ts with the API_URL build argument
-# Replaces the default apiUrl value in GlobalConfig class
-RUN sed -i "s|static apiUrl: string = '[^']*';|static apiUrl: string = '${API_URL}';|g" src/app/global-config.ts
+# First, verify the file exists and show its content for debugging
+RUN cat src/app/global-config.ts && \
+    # Replace the apiUrl value - matches any URL in single quotes after 'static apiUrl: string = '
+    sed -i "s|static apiUrl: string = '[^']*'|static apiUrl: string = '${API_URL}'|g" src/app/global-config.ts && \
+    # Verify the replacement was successful
+    echo "Updated global-config.ts:" && cat src/app/global-config.ts
 
 # Build the application for production
 RUN npm run build
