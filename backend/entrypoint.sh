@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
 echo "Starting entrypoint script..."
@@ -13,21 +13,26 @@ python manage.py migrate --noinput
 # Create superuser if environment variables are provided
 if [ -n "$DJANGO_SUPERUSER_USERNAME" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ] && [ -n "$DJANGO_SUPERUSER_EMAIL" ]; then
     echo "Checking if superuser needs to be created..."
-    # Use Python to create superuser with proper escaping
+    # Use Python to create superuser with proper escaping and error handling
     python manage.py shell <<EOF
 from django.contrib.auth import get_user_model
 import os
+import sys
 
-User = get_user_model()
-username = os.environ.get('DJANGO_SUPERUSER_USERNAME')
-email = os.environ.get('DJANGO_SUPERUSER_EMAIL')
-password = os.environ.get('DJANGO_SUPERUSER_PASSWORD')
+try:
+    User = get_user_model()
+    username = os.environ.get('DJANGO_SUPERUSER_USERNAME')
+    email = os.environ.get('DJANGO_SUPERUSER_EMAIL')
+    password = os.environ.get('DJANGO_SUPERUSER_PASSWORD')
 
-if not User.objects.filter(username=username).exists():
-    User.objects.create_superuser(username=username, email=email, password=password)
-    print(f'Superuser {username} created successfully.')
-else:
-    print(f'Superuser {username} already exists.')
+    if not User.objects.filter(username=username).exists():
+        User.objects.create_superuser(username=username, email=email, password=password)
+        print(f'Superuser {username} created successfully.')
+    else:
+        print(f'Superuser {username} already exists.')
+except Exception as e:
+    print(f'Error creating superuser: {e}', file=sys.stderr)
+    # Don't exit with error - let the application start anyway
 EOF
 else
     echo "Superuser environment variables not set. Skipping superuser creation."
