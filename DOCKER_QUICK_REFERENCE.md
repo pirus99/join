@@ -8,17 +8,16 @@
 # 1. Copy and configure environment
 cp .env.example .env
 # Edit .env with your settings (HTTPS is enabled by default)
+# OPTIONAL: Set DJANGO_SUPERUSER_* variables for automatic admin creation
 
 # 2. Generate self-signed certificate
 ./generate-self-signed-cert.sh
 
-# 3. Deploy
+# 3. Deploy (migrations and superuser creation happen automatically)
 docker compose up -d --build
-
-# 4. Initialize database and create admin user
-docker exec -it join-backend python manage.py migrate
-docker exec -it join-backend python manage.py createsuperuser
 ```
+
+**Note:** Database migrations and superuser creation (if configured) now happen automatically on first container start.
 
 ### Using the Helper Script
 ```bash
@@ -103,10 +102,10 @@ docker compose restart backend   # Restart backend
 
 ### Database Operations
 ```bash
-# Run migrations
+# Run migrations (usually automatic on container start)
 docker exec -it join-backend python manage.py migrate
 
-# Create superuser
+# Create superuser (automatic if DJANGO_SUPERUSER_* env vars are set)
 docker exec -it join-backend python manage.py createsuperuser
 
 # Access Django shell
@@ -114,6 +113,17 @@ docker exec -it join-backend python manage.py shell
 
 # Backup database (SQLite)
 docker cp join-backend:/app/data/db.sqlite3 ./backup.sqlite3
+
+# Check database volume
+docker volume inspect join_backend-data
+```
+
+**Automatic Superuser Creation:**
+Add these to your `.env` file before first deployment:
+```bash
+DJANGO_SUPERUSER_USERNAME=admin
+DJANGO_SUPERUSER_EMAIL=admin@example.com
+DJANGO_SUPERUSER_PASSWORD=your-secure-password
 ```
 
 ## 🌐 Production Deployment
@@ -135,6 +145,11 @@ DJANGO_ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
 DJANGO_CSRF_TRUSTED_ORIGINS=https://yourdomain.com
 DJANGO_CORS_ALLOWED_ORIGINS=https://yourdomain.com
 ACME_EMAIL=admin@yourdomain.com
+
+# Automatic admin user creation (recommended for first deployment)
+DJANGO_SUPERUSER_USERNAME=admin
+DJANGO_SUPERUSER_EMAIL=admin@yourdomain.com
+DJANGO_SUPERUSER_PASSWORD=<strong-password>
 ```
 
 2. **Enable SSL in docker-compose.yml:**
@@ -170,6 +185,10 @@ docker compose logs backend         # Check logs
 ```bash
 docker exec -it join-backend ls -la /app/data/
 docker exec -it join-backend python manage.py showmigrations
+
+# Check if database volume exists and has data
+docker volume inspect join_backend-data
+docker run --rm -v join_backend-data:/data alpine ls -la /data
 ```
 
 ### Frontend can't reach backend
@@ -228,10 +247,12 @@ docker compose restart backend
 ## 💡 Tips
 
 1. **Use PostgreSQL in Production**: SQLite is fine for development but use PostgreSQL for production
-2. **Regular Backups**: Set up automated daily backups
+2. **Regular Backups**: Set up automated daily backups (database is persisted in Docker volume `backend-data`)
 3. **Monitor Logs**: Regularly check logs for errors or suspicious activity
 4. **Update Images**: Periodically rebuild with latest base images for security patches
 5. **Test Before Deploy**: Test changes in a staging environment first
+6. **Automatic Superuser**: Use environment variables for initial superuser creation
+7. **Data Persistence**: Database is stored in a Docker volume and persists across container restarts
 
 ## 🆘 Getting Help
 
