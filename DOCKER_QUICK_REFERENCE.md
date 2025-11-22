@@ -32,6 +32,7 @@ After deployment, the application uses a **single domain** for both frontend and
 - **Frontend**: https://localhost
 - **Backend API**: https://localhost/api/
 - **Django Admin**: https://localhost/admin/
+- **Static Files**: https://localhost/static/ (Django admin and DRF assets)
 - **Traefik Dashboard**: http://localhost:8080 (if enabled)
 
 **Note:** Browser will show a security warning for Traefik's default self-signed certificate. Click "Advanced" and proceed.
@@ -185,7 +186,7 @@ docker run --rm -v join_backend-data:/data alpine ls -la /data
 
 ### Frontend can't reach backend
 1. Check API_URL in .env is `https://localhost/` (or your domain)
-2. Verify backend is accessible at `/api` and `/admin` paths
+2. Verify backend is accessible at `/api`, `/admin`, and `/static` paths
 3. Check CORS settings in Django allow your frontend domain
 4. Check Traefik routing: `docker compose logs traefik`
 
@@ -240,7 +241,7 @@ docker compose restart backend
 
 ## 💡 Tips
 
-1. **Single Domain Architecture**: Both frontend and backend use the same domain - backend at `/api` and `/admin` paths
+1. **Single Domain Architecture**: Both frontend and backend use the same domain - backend at `/api`, `/admin`, and `/static` paths
 2. **Use PostgreSQL in Production**: SQLite is fine for development but use PostgreSQL for production
 3. **Regular Backups**: Set up automated daily backups (database is persisted in Docker volume `backend-data`)
 4. **Monitor Logs**: Regularly check logs for errors or suspicious activity

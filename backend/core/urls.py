@@ -28,5 +28,8 @@ urlpatterns = [
 ]
 
 # Serve static files in production
+# Note: This serves Django admin and DRF static files through Django.
+# For high-traffic production, consider using WhiteNoise middleware or
+# configuring nginx/CDN to serve static files directly.
 if not settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
