@@ -77,6 +77,7 @@ case $option in
         echo "  Frontend: http://localhost"
         echo "  Backend API: http://localhost/api/"
         echo "  Django Admin: http://localhost/admin/"
+        echo "  Static Files: http://localhost/static/"
         echo "  Traefik Dashboard: http://localhost:8080"
         echo
         echo "Next steps:"

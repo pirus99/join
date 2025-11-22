@@ -61,6 +61,7 @@ The application uses a **single domain** for both frontend and backend:
 - **Frontend Application:** https://localhost
 - **Backend API:** https://localhost/api/
 - **Django Admin:** https://localhost/admin/
+- **Static Files:** https://localhost/static/ (Django admin and DRF assets)
 - **Traefik Dashboard:** http://localhost:8080 (if enabled)
 
 **Note:** Your browser will show a security warning because Traefik uses a default self-signed certificate. This is normal for local development. Click "Advanced" and "Proceed to localhost" to continue.
@@ -171,10 +172,13 @@ Let's Encrypt will automatically obtain and renew certificates.
 
 The application uses a **single domain** for both frontend and backend:
 
-- **Frontend:** Handles all requests to the root path and static assets
-- **Backend:** Handles requests to `/api/*` and `/admin/*` paths
+- **Frontend:** Handles all requests to the root path and Angular application assets
+- **Backend:** Handles requests to `/api/*`, `/admin/*`, and `/static/*` paths
+  - `/api/*` - REST API endpoints
+  - `/admin/*` - Django admin interface
+  - `/static/*` - Django admin and DRF static files (CSS, JS, images)
 - **Routing:** Managed by Traefik with path-based routing rules
-- **Priority:** Backend routes have higher priority (100) to ensure API and admin paths are captured before frontend catch-all route (priority 1)
+- **Priority:** Backend routes have higher priority (100) to ensure API, admin, and static paths are captured before frontend catch-all route (priority 1)
 
 ### Environment Variables
 
