@@ -26,7 +26,11 @@ RUN cat src/app/global-config.ts && \
     echo "Updated global-config.ts:" && cat src/app/global-config.ts
 
 # Build the application for production using Angular CLI
-RUN npx ng build
+RUN npx ng build && \
+    echo "Build complete. Checking output structure:" && \
+    ls -la dist/ && \
+    ls -la dist/join/ && \
+    ls -la dist/join/browser/ || echo "browser directory not found"
 
 # Stage 2: Serve with nginx
 FROM nginx:alpine
@@ -37,6 +41,12 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy built application from builder stage
 # Angular 19+ uses the application builder which outputs to dist/join/browser
 COPY --from=builder /app/dist/join/browser /usr/share/nginx/html
+
+# Verify files were copied correctly
+RUN echo "Files in nginx html directory:" && \
+    ls -la /usr/share/nginx/html/ && \
+    echo "Checking for index.html:" && \
+    test -f /usr/share/nginx/html/index.html && echo "index.html found" || echo "WARNING: index.html NOT found"
 
 # Expose port
 EXPOSE 80
