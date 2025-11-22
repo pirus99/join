@@ -61,12 +61,49 @@ This command will:
 - **Django Admin:** http://localhost/admin/
 - **Traefik Dashboard:** http://localhost:8080 (if enabled)
 
-### 5. Create Django Superuser (First Time Only)
+### 5. Create Django Superuser
+
+You have two options for creating a Django superuser:
+
+#### Option A: Automatic Creation (Recommended)
+
+Set environment variables in your `.env` file before starting the containers:
 
 ```bash
-docker exec -it join-backend python manage.py migrate
+# Add to .env file
+DJANGO_SUPERUSER_USERNAME=admin
+DJANGO_SUPERUSER_EMAIL=admin@example.com
+DJANGO_SUPERUSER_PASSWORD=your-secure-password
+```
+
+When the backend container starts, it will automatically:
+- Run database migrations
+- Create the superuser (if it doesn't already exist)
+
+Then start the application:
+
+```bash
+docker compose up -d
+```
+
+The superuser will be created automatically on first run.
+
+#### Option B: Manual Creation
+
+If you prefer to create the superuser manually or if you didn't set the environment variables:
+
+```bash
 docker exec -it join-backend python manage.py createsuperuser
 ```
+
+Or use the helper script:
+
+```bash
+./deploy.sh
+# Select option 5 - Create Django superuser
+```
+
+**Note:** The database migrations are now run automatically when the container starts, so you don't need to run them manually.
 
 ## 🔒 SSL/TLS Configuration
 
@@ -322,6 +359,35 @@ docker-compose up -d
 
 ## 📊 Database Management
 
+### Data Persistence
+
+The application uses Docker volumes to persist database files permanently:
+
+- **Volume Name:** `backend-data`
+- **Mount Point:** `/app/data` (inside the container)
+- **Database File:** `/app/data/db.sqlite3`
+
+This means your data is preserved even when you:
+- Stop and restart containers
+- Update the application (`docker compose down && docker compose up -d`)
+- Rebuild images
+
+To list all volumes:
+```bash
+docker volume ls | grep backend-data
+```
+
+To inspect the volume:
+```bash
+docker volume inspect join_backend-data
+```
+
+**Warning:** Only remove the volume if you want to delete all data:
+```bash
+# This will permanently delete all database data!
+docker compose down -v
+```
+
 ### Backup Database
 
 ```bash
@@ -333,10 +399,14 @@ docker cp join-backend:/app/data/db.sqlite3 ./backup-$(date +%Y%m%d).sqlite3
 
 ```bash
 docker cp ./backup.sqlite3 join-backend:/app/data/db.sqlite3
-docker-compose restart backend
+docker compose restart backend
 ```
 
 ### Run Migrations
+
+**Note:** Migrations are now run automatically when the container starts. You only need to run them manually if:
+- You're developing and adding new migrations
+- You need to apply specific migrations
 
 ```bash
 docker exec -it join-backend python manage.py migrate

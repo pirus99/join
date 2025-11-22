@@ -27,12 +27,18 @@ COPY . .
 RUN python manage.py collectstatic --noinput --clear 2>&1 | tee /tmp/collectstatic.log || \
     (echo "Warning: collectstatic had issues, check /tmp/collectstatic.log" && cat /tmp/collectstatic.log)
 
-# Create a non-root user
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+# Create a non-root user and ensure entrypoint is executable
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app && \
+    chmod +x /app/entrypoint.sh
+
 USER appuser
 
 # Expose port
 EXPOSE 8000
+
+# Set entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Run gunicorn
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120", "core.wsgi:application"]

@@ -64,6 +64,10 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-}
       - DB_HOST=${DB_HOST:-}
       - DB_PORT=${DB_PORT:-}
+      # Django superuser creation (optional)
+      - DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME:-}
+      - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL:-}
+      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD:-}
     volumes:
       - backend-data:/app/data
       - backend-static:/app/staticfiles
