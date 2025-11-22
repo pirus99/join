@@ -93,10 +93,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - API_URL=${API_URL:-https://localhost/}
     container_name: join-frontend
     restart: unless-stopped
-    environment:
-      - API_URL=${API_URL:-https://localhost/}
     networks:
       - web
     labels:

@@ -3,6 +3,9 @@
 # Stage 1: Build the Angular application
 FROM node:22-alpine AS builder
 
+# Build argument for API URL (can be overridden at build time)
+ARG API_URL=https://localhost/
+
 WORKDIR /app
 
 # Copy package files
@@ -14,8 +17,10 @@ RUN npm ci --legacy-peer-deps
 # Copy source code
 COPY . .
 
+# Update global-config.ts with the API_URL build argument
+RUN sed -i "s|http://localhost:8000/|${API_URL}|g" src/app/global-config.ts
+
 # Build the application for production
-# API URL will be replaced by nginx at runtime using environment variables
 RUN npm run build
 
 # Stage 2: Serve with nginx
@@ -25,15 +30,11 @@ FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built application from builder stage
+# Angular 19+ uses the application builder which outputs to dist/join/browser
 COPY --from=builder /app/dist/join/browser /usr/share/nginx/html
-
-# Copy entrypoint script for runtime environment variable substitution
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
 
 # Expose port
 EXPOSE 80
 
-# Use custom entrypoint
-ENTRYPOINT ["/docker-entrypoint.sh"]
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]

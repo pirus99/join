@@ -183,7 +183,13 @@ All configuration is done through environment variables in the `.env` file:
 #### Domain Configuration
 ```bash
 DOMAIN=localhost                    # Your domain name (used for both frontend and backend)
-API_URL=https://localhost/          # Full API URL for frontend (use https://)
+API_URL=https://localhost/          # Full API URL for frontend (set at build time)
+```
+
+**Note:** The `API_URL` is configured at build time and compiled into the Angular application. If you change it, you need to rebuild the frontend container:
+```bash
+docker compose build frontend
+docker compose up -d
 ```
 
 #### Django Backend
