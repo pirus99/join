@@ -70,12 +70,12 @@ services:
     labels:
       - "traefik.enable=true"
       # HTTP router - backend accessible at /api/ and /admin/ paths on main domain
-      - "traefik.http.routers.backend.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`, `/admin`)"
+      - "traefik.http.routers.backend.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api`) || PathPrefix(`/admin`))"
       - "traefik.http.routers.backend.entrypoints=web"
       - "traefik.http.routers.backend.priority=100"
       - "traefik.http.services.backend.loadbalancer.server.port=8000"
       # HTTPS router - uses Traefik default certificate (or Let's Encrypt if configured)
-      - "traefik.http.routers.backend-secure.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`, `/admin`)"
+      - "traefik.http.routers.backend-secure.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api`) || PathPrefix(`/admin`))"
       - "traefik.http.routers.backend-secure.entrypoints=websecure"
       - "traefik.http.routers.backend-secure.priority=100"
       - "traefik.http.routers.backend-secure.tls=true"
