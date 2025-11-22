@@ -18,7 +18,8 @@ RUN npm ci --legacy-peer-deps
 COPY . .
 
 # Update global-config.ts with the API_URL build argument
-RUN sed -i "s|http://localhost:8000/|${API_URL}|g" src/app/global-config.ts
+# Replaces the default apiUrl value in GlobalConfig class
+RUN sed -i "s|static apiUrl: string = '[^']*';|static apiUrl: string = '${API_URL}';|g" src/app/global-config.ts
 
 # Build the application for production
 RUN npm run build
