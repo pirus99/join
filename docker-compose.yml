@@ -104,12 +104,12 @@ services:
       # HTTP router - serves /static/ path
       - "traefik.http.routers.static-server.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/static`)"
       - "traefik.http.routers.static-server.entrypoints=web"
-      - "traefik.http.routers.static-server.priority=100"
+      - "traefik.http.routers.static-server.priority=110"
       - "traefik.http.services.static-server.loadbalancer.server.port=80"
       # HTTPS router - uses Traefik default certificate (or Let's Encrypt if configured)
       - "traefik.http.routers.static-server-secure.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/static`)"
       - "traefik.http.routers.static-server-secure.entrypoints=websecure"
-      - "traefik.http.routers.static-server-secure.priority=100"
+      - "traefik.http.routers.static-server-secure.priority=110"
       - "traefik.http.routers.static-server-secure.tls=true"
       # Uncomment the next line to use Let's Encrypt instead of Traefik default certificate
       # - "traefik.http.routers.static-server-secure.tls.certresolver=letsencrypt"
