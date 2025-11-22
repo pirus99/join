@@ -2,7 +2,7 @@ services:
   # Traefik Reverse Proxy
   traefik:
     image: traefik:v2.11
-    container_name: traefik
+    container_name: join-traefik
     restart: unless-stopped
     command:
       # Enable Docker provider
@@ -17,9 +17,6 @@ services:
       # Logging
       - "--log.level=${TRAEFIK_LOG_LEVEL:-INFO}"
       - "--accesslog=true"
-      # File provider for self-signed certificates (used when USE_SELF_SIGNED_CERT=true)
-      - "--providers.file.filename=/etc/traefik/traefik-tls.yml"
-      - "--providers.file.watch=true"
       # Optional: Let's Encrypt SSL (uncomment for production with real domain)
       # - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
       # - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
@@ -31,9 +28,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik-certificates:/letsencrypt
-      # Mount self-signed certificates (if USE_SELF_SIGNED_CERT=true)
-      - ./certs:/certificates:ro
-      - ./traefik-tls.yml:/etc/traefik/traefik-tls.yml:ro
     networks:
       - web
     labels:
