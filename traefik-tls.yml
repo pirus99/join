@@ -1,7 +1,0 @@
-# Traefik dynamic configuration for self-signed certificates
-# This file is used when USE_SELF_SIGNED_CERT=true
-
-tls:
-  certificates:
-    - certFile: /certificates/cert.crt
-      keyFile: /certificates/cert.key
