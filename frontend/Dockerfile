@@ -25,8 +25,8 @@ RUN cat src/app/global-config.ts && \
     # Verify the replacement was successful
     echo "Updated global-config.ts:" && cat src/app/global-config.ts
 
-# Build the application for production
-RUN npm run build
+# Build the application for production using Angular CLI
+RUN npx ng build
 
 # Stage 2: Serve with nginx
 FROM nginx:alpine
