@@ -27,10 +27,14 @@ RUN cat src/app/global-config.ts && \
 
 # Build the application for production using Angular CLI
 RUN npx ng build && \
-    echo "Build complete. Checking output structure:" && \
+    echo "=== Build complete. Checking output structure ===" && \
     ls -la dist/ && \
+    echo "=== Checking dist/join/ ===" && \
     ls -la dist/join/ && \
-    ls -la dist/join/browser/ || echo "browser directory not found"
+    echo "=== Checking for browser subdirectory ===" && \
+    (ls -la dist/join/browser/ 2>/dev/null || echo "No browser subdirectory found") && \
+    echo "=== Files directly in dist/join/ ===" && \
+    find dist/join -maxdepth 1 -type f
 
 # Stage 2: Serve with nginx
 FROM nginx:alpine
@@ -39,14 +43,33 @@ FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built application from builder stage
-# Angular 19+ uses the application builder which outputs to dist/join/browser
-COPY --from=builder /app/dist/join/browser /usr/share/nginx/html
+# Angular 19+ application builder: try browser subdirectory first, then fall back to main directory
+COPY --from=builder /app/dist/join /tmp/dist
+
+# Copy files from the correct location to nginx html directory
+RUN if [ -d /tmp/dist/browser ] && [ -f /tmp/dist/browser/index.html ]; then \
+        echo "=== Copying from browser subdirectory ===" && \
+        cp -r /tmp/dist/browser/* /usr/share/nginx/html/; \
+    elif [ -f /tmp/dist/index.html ]; then \
+        echo "=== Copying from main dist directory ===" && \
+        cp -r /tmp/dist/* /usr/share/nginx/html/; \
+    else \
+        echo "ERROR: Could not find index.html" && \
+        echo "Contents of /tmp/dist:" && ls -la /tmp/dist/ && \
+        exit 1; \
+    fi && \
+    rm -rf /tmp/dist
 
 # Verify files were copied correctly
-RUN echo "Files in nginx html directory:" && \
+RUN echo "=== Files in nginx html directory ===" && \
     ls -la /usr/share/nginx/html/ && \
-    echo "Checking for index.html:" && \
-    test -f /usr/share/nginx/html/index.html && echo "index.html found" || echo "WARNING: index.html NOT found"
+    echo "=== Checking for index.html ===" && \
+    if [ -f /usr/share/nginx/html/index.html ]; then \
+        echo "✓ index.html found" && \
+        echo "First 20 lines:" && cat /usr/share/nginx/html/index.html | head -20; \
+    else \
+        echo "✗ ERROR: index.html NOT found" && exit 1; \
+    fi
 
 # Expose port
 EXPOSE 80
