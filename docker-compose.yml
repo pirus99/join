@@ -32,7 +32,7 @@ services:
       - web
     labels:
       - "traefik.enable=true"
-      # Dashboard
+      # Dashboard (uses subdomain pattern for separation from main app)
       - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN:-localhost}`)"
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.routers.traefik.entrypoints=web"
@@ -69,7 +69,7 @@ services:
       - web
     labels:
       - "traefik.enable=true"
-      # HTTP router - backend accessible via /api and /admin paths on main domain
+      # HTTP router - backend accessible at /api/ and /admin/ paths on main domain
       - "traefik.http.routers.backend.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`, `/admin`)"
       - "traefik.http.routers.backend.entrypoints=web"
       - "traefik.http.routers.backend.priority=100"
