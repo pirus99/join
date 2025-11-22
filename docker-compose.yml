@@ -69,13 +69,13 @@ services:
       - web
     labels:
       - "traefik.enable=true"
-      # HTTP router - backend accessible at /api/, /admin/, and /static/ paths on main domain
-      - "traefik.http.routers.backend.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api`) || PathPrefix(`/admin`) || PathPrefix(`/static`))"
+      # HTTP router - backend accessible at /api/ and /admin/ paths on main domain
+      - "traefik.http.routers.backend.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api`) || PathPrefix(`/admin`))"
       - "traefik.http.routers.backend.entrypoints=web"
       - "traefik.http.routers.backend.priority=100"
       - "traefik.http.services.backend.loadbalancer.server.port=8000"
       # HTTPS router - uses Traefik default certificate (or Let's Encrypt if configured)
-      - "traefik.http.routers.backend-secure.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api`) || PathPrefix(`/admin`) || PathPrefix(`/static`))"
+      - "traefik.http.routers.backend-secure.rule=Host(`${DOMAIN:-localhost}`) && (PathPrefix(`/api`) || PathPrefix(`/admin`))"
       - "traefik.http.routers.backend-secure.entrypoints=websecure"
       - "traefik.http.routers.backend-secure.priority=100"
       - "traefik.http.routers.backend-secure.tls=true"
@@ -87,6 +87,40 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # Static Server - Serves Django admin and DRF static files
+  static-server:
+    build:
+      context: ./static-server
+      dockerfile: Dockerfile
+    container_name: join-static-server
+    restart: unless-stopped
+    volumes:
+      - backend-static:/usr/share/nginx/html/static:ro
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      # HTTP router - serves /static/ path
+      - "traefik.http.routers.static-server.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/static`)"
+      - "traefik.http.routers.static-server.entrypoints=web"
+      - "traefik.http.routers.static-server.priority=100"
+      - "traefik.http.services.static-server.loadbalancer.server.port=80"
+      # HTTPS router - uses Traefik default certificate (or Let's Encrypt if configured)
+      - "traefik.http.routers.static-server-secure.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/static`)"
+      - "traefik.http.routers.static-server-secure.entrypoints=websecure"
+      - "traefik.http.routers.static-server-secure.priority=100"
+      - "traefik.http.routers.static-server-secure.tls=true"
+      # Uncomment the next line to use Let's Encrypt instead of Traefik default certificate
+      # - "traefik.http.routers.static-server-secure.tls.certresolver=letsencrypt"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - backend
 
   # Frontend - Angular Application
   frontend:

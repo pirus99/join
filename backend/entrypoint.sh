@@ -6,10 +6,6 @@ echo "Starting entrypoint script..."
 # Wait a bit for any database to be ready (useful for PostgreSQL/MySQL in the future)
 sleep 2
 
-# Collect static files to the volume-mounted directory
-echo "Collecting static files..."
-python manage.py collectstatic --noinput --clear
-
 # Run database migrations
 echo "Running database migrations..."
 python manage.py migrate --noinput
