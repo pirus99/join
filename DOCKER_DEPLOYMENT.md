@@ -31,7 +31,7 @@ Edit `.env` with your preferred text editor and update the following key variabl
 ```bash
 # Basic configuration for local testing
 DOMAIN=localhost
-API_URL=http://localhost/
+API_URL=https://localhost/
 DJANGO_SECRET_KEY=your-generated-secret-key-here
 DJANGO_DEBUG=False
 ```
@@ -45,7 +45,7 @@ python -c 'from django.core.management.utils import get_random_secret_key; print
 ### 3. Start the Application
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 This command will:
@@ -56,10 +56,14 @@ This command will:
 
 ### 4. Access the Application
 
-- **Frontend Application:** http://localhost
-- **Backend API:** http://localhost/api/
-- **Django Admin:** http://localhost/admin/
+The application uses a **single domain** for both frontend and backend:
+
+- **Frontend Application:** https://localhost
+- **Backend API:** https://localhost/api/
+- **Django Admin:** https://localhost/admin/
 - **Traefik Dashboard:** http://localhost:8080 (if enabled)
+
+**Note:** Your browser will show a security warning because Traefik uses a default self-signed certificate. This is normal for local development. Click "Advanced" and "Proceed to localhost" to continue.
 
 ### 5. Create Django Superuser
 
@@ -107,62 +111,17 @@ Or use the helper script:
 
 ## 🔒 SSL/TLS Configuration
 
-The application now supports HTTPS by default. You can choose between self-signed certificates (for development/testing) or Let's Encrypt (for production).
+### Default Configuration (Development)
 
-### Option 1: Self-Signed Certificates (Recommended for Development)
+By default, Traefik provides a self-signed certificate for HTTPS. This is perfect for local development and testing.
 
-Self-signed certificates are perfect for local development and testing before deploying to production.
+- **Access the app at:** https://localhost
+- **Browser Warning:** You'll see a security warning because the certificate is self-signed. This is expected and safe for development.
+- **Connection:** Still encrypted with TLS, just not trusted by default certificate authorities.
 
-#### Step 1: Generate Self-Signed Certificate
+**No additional setup required!** Just start the containers and access via HTTPS.
 
-Run the certificate generation script:
-
-```bash
-./generate-self-signed-cert.sh
-```
-
-Or with a custom domain:
-
-```bash
-./generate-self-signed-cert.sh yourdomain.com
-```
-
-This creates certificates in the `certs/` directory:
-- `cert.key` - Private key
-- `cert.crt` - Certificate
-- `cert.pem` - Combined PEM file
-
-#### Step 2: Update Environment Variables
-
-Edit `.env` and ensure these values are set:
-
-```bash
-DOMAIN=localhost                           # Your domain
-API_URL=https://localhost/                 # Note: HTTPS
-DJANGO_CSRF_TRUSTED_ORIGINS=https://localhost,https://127.0.0.1
-DJANGO_CORS_ALLOWED_ORIGINS=https://localhost,https://127.0.0.1
-USE_SELF_SIGNED_CERT=true
-```
-
-#### Step 3: Deploy with HTTPS
-
-```bash
-docker compose up -d
-```
-
-#### Step 4: Access the Application
-
-- **Frontend:** https://localhost
-- **Backend API:** https://localhost/api/
-- **Django Admin:** https://localhost/admin/
-
-**Important:** Your browser will show a security warning because the certificate is self-signed. This is normal and expected. Click "Advanced" and "Proceed to localhost" (or similar) to continue.
-
-#### Why Self-Signed Certificates Show Warnings
-
-Self-signed certificates are not issued by a trusted Certificate Authority (CA), so browsers display warnings. This is perfectly safe for development and testing environments. The connection is still encrypted.
-
-### Option 2: Let's Encrypt (For Production with Real Domain)
+### Production Configuration (Let's Encrypt)
 
 For production deployment with a real domain, use Let's Encrypt for free, trusted SSL certificates.
 
@@ -181,7 +140,6 @@ For production deployment with a real domain, use Let's Encrypt for free, truste
    API_URL=https://yourdomain.com/
    DJANGO_CSRF_TRUSTED_ORIGINS=https://yourdomain.com
    DJANGO_CORS_ALLOWED_ORIGINS=https://yourdomain.com
-   USE_SELF_SIGNED_CERT=false
    ACME_EMAIL=admin@yourdomain.com
    ```
 
@@ -207,20 +165,16 @@ For production deployment with a real domain, use Let's Encrypt for free, truste
 
 Let's Encrypt will automatically obtain and renew certificates.
 
-### Switching Between HTTP and HTTPS
-
-If you need to switch back to HTTP (not recommended):
-
-1. Comment out the HTTPS routers in `docker-compose.yml`
-2. Update `.env`:
-   ```bash
-   API_URL=http://localhost/
-   DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost
-   DJANGO_CORS_ALLOWED_ORIGINS=http://localhost
-   ```
-3. Redeploy: `docker compose up -d`
-
 ## 🔧 Configuration Details
+
+### Single Domain Architecture
+
+The application uses a **single domain** for both frontend and backend:
+
+- **Frontend:** Handles all requests to the root path and static assets
+- **Backend:** Handles requests to `/api/*` and `/admin/*` paths
+- **Routing:** Managed by Traefik with path-based routing rules
+- **Priority:** Backend routes have higher priority (100) to ensure API and admin paths are captured before frontend catch-all route (priority 1)
 
 ### Environment Variables
 
@@ -228,7 +182,7 @@ All configuration is done through environment variables in the `.env` file:
 
 #### Domain Configuration
 ```bash
-DOMAIN=localhost                    # Your domain name
+DOMAIN=localhost                    # Your domain name (used for both frontend and backend)
 API_URL=https://localhost/          # Full API URL for frontend (use https://)
 ```
 
@@ -247,12 +201,6 @@ TRAEFIK_HTTP_PORT=80               # HTTP port
 TRAEFIK_HTTPS_PORT=443             # HTTPS port
 TRAEFIK_DASHBOARD_PORT=8080        # Dashboard port
 TRAEFIK_LOG_LEVEL=INFO             # Log level (DEBUG, INFO, WARN, ERROR)
-```
-
-#### SSL/TLS Configuration
-```bash
-USE_SELF_SIGNED_CERT=true          # Use self-signed certificates (true/false)
-ACME_EMAIL=admin@yourdomain.com    # Email for Let's Encrypt (when using real certs)
 ```
 
 ### Production Deployment
@@ -274,7 +222,7 @@ For production deployment with a real domain and SSL:
    DJANGO_CORS_ALLOWED_ORIGINS=https://yourdomain.com
    ```
 
-3. **Enable SSL in docker-compose.yml:**
+3. **Enable Let's Encrypt in docker-compose.yml:**
    
    Uncomment the SSL/HTTPS sections in `docker-compose.yml`:
    - Traefik Let's Encrypt configuration
@@ -298,7 +246,7 @@ For production deployment with a real domain and SSL:
 
 6. **Deploy:**
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
 
 ## 🔄 Managing the Deployment
@@ -307,29 +255,29 @@ For production deployment with a real domain and SSL:
 
 ```bash
 # All services
-docker-compose logs -f
+docker compose logs -f
 
 # Specific service
-docker-compose logs -f backend
-docker-compose logs -f frontend
-docker-compose logs -f traefik
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f traefik
 ```
 
 ### Stop the Application
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ### Restart Services
 
 ```bash
 # Restart all services
-docker-compose restart
+docker compose restart
 
 # Restart specific service
-docker-compose restart backend
-docker-compose restart frontend
+docker compose restart backend
+docker compose restart frontend
 ```
 
 ### Rebuild and Redeploy
@@ -338,11 +286,11 @@ When you make code changes, rebuild the images:
 
 ```bash
 # Rebuild and restart (with no cache)
-docker-compose build --no-cache
-docker-compose up -d
+docker compose build --no-cache
+docker compose up -d
 
 # Or in one command
-docker-compose up -d --build --force-recreate
+docker compose up -d --build --force-recreate
 ```
 
 ### Update to Latest Code
@@ -352,9 +300,9 @@ docker-compose up -d --build --force-recreate
 git pull
 
 # Rebuild and redeploy
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
+docker compose down
+docker compose build --no-cache
+docker compose up -d
 ```
 
 ## 📊 Database Management
@@ -423,7 +371,7 @@ docker exec -it join-backend python manage.py shell
 ### Check Container Status
 
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 ### Check Container Health
@@ -445,23 +393,36 @@ docker exec -it join-frontend /bin/sh
 ### View Specific Service Logs
 
 ```bash
-docker-compose logs --tail=100 backend
+docker compose logs --tail=100 backend
 ```
 
 ### Reset Everything
 
 ```bash
 # Warning: This will delete all data!
-docker-compose down -v
-docker-compose up -d
+docker compose down -v
+docker compose up -d
 ```
+
+### HTTPS/Certificate Issues
+
+**Browser shows security warning:**
+- This is expected with Traefik's default self-signed certificate
+- The connection is still encrypted
+- For local development: Click "Advanced" and proceed
+- For production: Configure Let's Encrypt as described above
+
+**API calls fail with CORS errors:**
+- Check that `DJANGO_CORS_ALLOWED_ORIGINS` includes your domain with `https://`
+- Check that `API_URL` is set correctly in `.env`
+- Restart containers after changing environment variables
 
 ## 🔒 Security Considerations
 
 1. **Always change `DJANGO_SECRET_KEY` in production**
 2. **Set `DJANGO_DEBUG=False` in production**
 3. **Use strong passwords for admin accounts**
-4. **Enable SSL/TLS for production deployments**
+4. **Use Let's Encrypt for production deployments** (not Traefik default certificate)
 5. **Secure or disable Traefik dashboard in production**
 6. **Regularly update Docker images for security patches**
 7. **Use PostgreSQL or MySQL instead of SQLite for production**
@@ -502,7 +463,7 @@ Don't forget to add `postgres-data:` to volumes section.
 ### Scale Backend Workers
 
 ```bash
-docker-compose up -d --scale backend=3
+docker compose up -d --scale backend=3
 ```
 
 ## 📚 Additional Resources

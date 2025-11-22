@@ -2,7 +2,7 @@
 
 ## 🚀 Quick Start Commands
 
-### Initial Deployment with Self-Signed HTTPS
+### Initial Deployment with HTTPS
 
 ```bash
 # 1. Copy and configure environment
@@ -10,14 +10,13 @@ cp .env.example .env
 # Edit .env with your settings (HTTPS is enabled by default)
 # OPTIONAL: Set DJANGO_SUPERUSER_* variables for automatic admin creation
 
-# 2. Generate self-signed certificate
-./generate-self-signed-cert.sh
-
-# 3. Deploy (migrations and superuser creation happen automatically)
+# 2. Deploy (migrations and superuser creation happen automatically)
 docker compose up -d --build
 ```
 
-**Note:** Database migrations and superuser creation (if configured) now happen automatically on first container start.
+**Note:** 
+- Traefik provides a default self-signed certificate (browser will show security warning)
+- Database migrations and superuser creation (if configured) happen automatically on first container start
 
 ### Using the Helper Script
 ```bash
@@ -28,29 +27,23 @@ docker compose up -d --build
 
 ## 📍 Access Points
 
-After deployment, access:
-- **Frontend**: https://localhost (or http://localhost for HTTP only)
+After deployment, the application uses a **single domain** for both frontend and backend:
+
+- **Frontend**: https://localhost
 - **Backend API**: https://localhost/api/
 - **Django Admin**: https://localhost/admin/
 - **Traefik Dashboard**: http://localhost:8080 (if enabled)
 
-**Note:** Self-signed certificates will show a browser warning. Click "Advanced" and proceed to continue.
+**Note:** Browser will show a security warning for Traefik's default self-signed certificate. Click "Advanced" and proceed.
 
 ## 🔒 SSL/TLS Quick Setup
 
-### Self-Signed Certificate (Development)
+### Default (Development)
+
+Traefik automatically provides a self-signed certificate - **no setup required!**
 
 ```bash
-# Generate certificate
-./generate-self-signed-cert.sh
-
-# Ensure .env has:
-# USE_SELF_SIGNED_CERT=true
-# API_URL=https://localhost/
-# DJANGO_CSRF_TRUSTED_ORIGINS=https://localhost
-# DJANGO_CORS_ALLOWED_ORIGINS=https://localhost
-
-# Deploy
+# Just deploy and access via HTTPS
 docker compose up -d
 ```
 
@@ -61,7 +54,6 @@ docker compose up -d
 #    DOMAIN=yourdomain.com
 #    API_URL=https://yourdomain.com/
 #    ACME_EMAIL=admin@yourdomain.com
-#    USE_SELF_SIGNED_CERT=false
 
 # 2. Uncomment Let's Encrypt lines in docker-compose.yml
 # 3. Deploy
@@ -154,7 +146,7 @@ DJANGO_SUPERUSER_PASSWORD=<strong-password>
 
 2. **Enable SSL in docker-compose.yml:**
    - Uncomment Let's Encrypt configuration in Traefik section
-   - Uncomment HTTPS routers for backend and frontend
+   - Uncomment certresolver lines for backend and frontend
 
 3. **Deploy:**
 ```bash
@@ -166,7 +158,7 @@ docker compose up -d --build
 - [ ] Changed DJANGO_SECRET_KEY to a strong random value
 - [ ] Set DJANGO_DEBUG=False in production
 - [ ] Configured proper DOMAIN and allowed hosts
-- [ ] Enabled SSL/TLS with Let's Encrypt
+- [ ] Enabled SSL/TLS with Let's Encrypt (for production)
 - [ ] Secured or disabled Traefik dashboard
 - [ ] Created strong admin password
 - [ ] Configured firewall (allow 80, 443)
@@ -192,16 +184,18 @@ docker run --rm -v join_backend-data:/data alpine ls -la /data
 ```
 
 ### Frontend can't reach backend
-1. Check API_URL in .env matches your setup
-2. Verify CORS settings in Django allow your frontend domain
-3. Check Traefik routing in docker compose logs
+1. Check API_URL in .env is `https://localhost/` (or your domain)
+2. Verify backend is accessible at `/api` and `/admin` paths
+3. Check CORS settings in Django allow your frontend domain
+4. Check Traefik routing: `docker compose logs traefik`
 
 ### SSL certificate issues
 ```bash
 docker compose logs traefik
-# Check ACME email is correct
-# Verify DNS points to your server
-# Ensure ports 80 and 443 are open
+# For production with Let's Encrypt:
+# - Check ACME email is correct
+# - Verify DNS points to your server
+# - Ensure ports 80 and 443 are open
 ```
 
 ## 📊 Monitoring
@@ -246,13 +240,14 @@ docker compose restart backend
 
 ## 💡 Tips
 
-1. **Use PostgreSQL in Production**: SQLite is fine for development but use PostgreSQL for production
-2. **Regular Backups**: Set up automated daily backups (database is persisted in Docker volume `backend-data`)
-3. **Monitor Logs**: Regularly check logs for errors or suspicious activity
-4. **Update Images**: Periodically rebuild with latest base images for security patches
-5. **Test Before Deploy**: Test changes in a staging environment first
-6. **Automatic Superuser**: Use environment variables for initial superuser creation
-7. **Data Persistence**: Database is stored in a Docker volume and persists across container restarts
+1. **Single Domain Architecture**: Both frontend and backend use the same domain - backend at `/api` and `/admin` paths
+2. **Use PostgreSQL in Production**: SQLite is fine for development but use PostgreSQL for production
+3. **Regular Backups**: Set up automated daily backups (database is persisted in Docker volume `backend-data`)
+4. **Monitor Logs**: Regularly check logs for errors or suspicious activity
+5. **Update Images**: Periodically rebuild with latest base images for security patches
+6. **Test Before Deploy**: Test changes in a staging environment first
+7. **Automatic Superuser**: Use environment variables for initial superuser creation
+8. **Data Persistence**: Database is stored in a Docker volume and persists across container restarts
 
 ## 🆘 Getting Help
 

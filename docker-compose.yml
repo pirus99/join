@@ -33,7 +33,7 @@ services:
     labels:
       - "traefik.enable=true"
       # Dashboard
-      - "traefik.http.routers.traefik.rule=Host(`${TRAEFIK_DASHBOARD_HOST:-traefik.localhost}`)"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN:-localhost}`)"
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.routers.traefik.entrypoints=web"
 
@@ -69,15 +69,17 @@ services:
       - web
     labels:
       - "traefik.enable=true"
-      # HTTP router
-      - "traefik.http.routers.backend.rule=Host(`${BACKEND_HOST:-backend.localhost}`) || (Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`, `/admin`))"
+      # HTTP router - backend accessible via /api and /admin paths on main domain
+      - "traefik.http.routers.backend.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`, `/admin`)"
       - "traefik.http.routers.backend.entrypoints=web"
+      - "traefik.http.routers.backend.priority=100"
       - "traefik.http.services.backend.loadbalancer.server.port=8000"
-      # HTTPS router (works with self-signed certs or Let's Encrypt)
-      - "traefik.http.routers.backend-secure.rule=Host(`${BACKEND_HOST:-backend.localhost}`) || (Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`, `/admin`))"
+      # HTTPS router - uses Traefik default certificate (or Let's Encrypt if configured)
+      - "traefik.http.routers.backend-secure.rule=Host(`${DOMAIN:-localhost}`) && PathPrefix(`/api`, `/admin`)"
       - "traefik.http.routers.backend-secure.entrypoints=websecure"
+      - "traefik.http.routers.backend-secure.priority=100"
       - "traefik.http.routers.backend-secure.tls=true"
-      # Uncomment the next line to use Let's Encrypt instead of self-signed certs
+      # Uncomment the next line to use Let's Encrypt instead of Traefik default certificate
       # - "traefik.http.routers.backend-secure.tls.certresolver=letsencrypt"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/admin/"]
@@ -99,15 +101,17 @@ services:
       - web
     labels:
       - "traefik.enable=true"
-      # HTTP router
+      # HTTP router - frontend handles all paths on main domain except backend paths
       - "traefik.http.routers.frontend.rule=Host(`${DOMAIN:-localhost}`)"
       - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.routers.frontend.priority=1"
       - "traefik.http.services.frontend.loadbalancer.server.port=80"
-      # HTTPS router (works with self-signed certs or Let's Encrypt)
+      # HTTPS router - uses Traefik default certificate (or Let's Encrypt if configured)
       - "traefik.http.routers.frontend-secure.rule=Host(`${DOMAIN:-localhost}`)"
       - "traefik.http.routers.frontend-secure.entrypoints=websecure"
+      - "traefik.http.routers.frontend-secure.priority=1"
       - "traefik.http.routers.frontend-secure.tls=true"
-      # Uncomment the next line to use Let's Encrypt instead of self-signed certs
+      # Uncomment the next line to use Let's Encrypt instead of Traefik default certificate
       # - "traefik.http.routers.frontend-secure.tls.certresolver=letsencrypt"
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
