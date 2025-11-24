@@ -119,7 +119,10 @@ export class UserService {
      * Logs in as a guest user anonymously
      * @returns {Promise<any>} Promise that resolves when guest login is successful
      */
-    loginGuest() {
+    async loginGuest() {
+        const email = 'guest@join.de'
+        const password = 'SuperSafeGuest123!'
 
+        await this.login(email, password)
     }
 }
