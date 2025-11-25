@@ -64,7 +64,6 @@ export class UserService {
         GlobalConfig.token = token;
         this.user = response;
         sessionStorage.setItem('user', JSON.stringify(this.user));
-        console.log('Login successful', response);
         return response
     }
 
@@ -79,7 +78,6 @@ export class UserService {
             this.notify.pushNotification('Logout Error, Please Try Again', NotificationType.ERROR, NotificationPosition.TOP_RIGHT, 8000);
             return;
         });
-        console.log('Logout successful', response);
         this.user = null;
         GlobalConfig.token = null;
         sessionStorage.clear();
@@ -93,7 +91,6 @@ export class UserService {
      * @returns {Promise<AuthUser>} Promise that completes when signup is successful
      */
     async signUp(email: string, password: string, firstName: string, lastName: string): Promise<AuthUser> {
-        console.log('Signing up user with', email, firstName, lastName);
         const response = await firstValueFrom(this.http.post<AuthUser>(GlobalConfig.apiUrl + this.apiEndpoint + 'registration/', { first_name: firstName, last_name: lastName, email: email, password: password })).catch(error => {
             if (error instanceof HttpErrorResponse && error.status === 400) {
                 this.notify.pushNotification('Email has already created an account.', NotificationType.ERROR, NotificationPosition.BOTTOM_RIGHT, 8000);
@@ -111,7 +108,6 @@ export class UserService {
         GlobalConfig.token = token;
         this.user = response;
         sessionStorage.setItem('user', JSON.stringify(this.user));
-        console.log('Sign up successful', response);
         return response
     }
 

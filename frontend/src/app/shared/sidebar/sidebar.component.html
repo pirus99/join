@@ -28,14 +28,16 @@
             <span>Contacts</span>
           </div>
         </a>
-      } @else {
-        <a routerLink="/">
-          <div class="btn-inner">
-            <div [innerHTML]="svgContents['login']" class="icon"></div>
-            <span>Log In</span>
-          </div>
-        </a>
-      }
+        } @else {
+        <div (click)="this.verifyLogin()" class="w100">
+          <a routerLink="/">
+            <div class="btn-inner">
+              <div [innerHTML]="svgContents['login']" class="icon"></div>
+              <span>Log In</span>
+            </div>
+          </a>
+        </div>
+        }
       </nav>
     </div>
     <div class="lower-wrapper">
