@@ -31,6 +31,7 @@
                         class="input-sm border blue-focus"
                         name="password"
                         placeholder="Password"
+                        autocomplete="current-password"
                         required
                         [(ngModel)]="logInPassword"
                         #logInPasswordVar="ngModel"
@@ -110,6 +111,7 @@
                         name="password1"
                         type="{{inputTypePW1}}"
                         placeholder="Password"
+                        autocomplete="new-password"
                         required
                         minlength="8"
                         pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
@@ -136,6 +138,7 @@
                         name="password2"
                         placeholder="Confirm Password"
                         required
+                        autocomplete="new-password"
                         [(ngModel)]="signUpPassword2"
                         #signUpPassword2Var="ngModel"
                         [class.red-border]="(signUpPassword1 !== signUpPassword2) && signUpForm.submitted"
