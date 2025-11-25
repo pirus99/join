@@ -221,11 +221,11 @@ export class LogInComponent {
     /**
      * Logs in using a guest account and navigates to the summary on success.
      */
-    loginGuest() {
+    async loginGuest() {
+        await this.userService.loginGuest();
         this.logInService.verifyLogIn();
         this.router.navigate(['/summary']);
     }
-
 
     /**
      * Toggles visibility of the login password field.

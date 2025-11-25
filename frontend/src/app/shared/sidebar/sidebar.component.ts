@@ -96,6 +96,10 @@ export class SidebarComponent implements OnDestroy {
         this.subscriptions.add(svgSub);
     }
 
+    verifyLogin(): void {
+        this.loginService.verifyLogIn();
+    }
+
     /**
      * Lifecycle hook: cleans up all subscriptions.
      */
