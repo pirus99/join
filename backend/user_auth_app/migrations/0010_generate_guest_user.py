@@ -10,6 +10,8 @@ def create_guest_user(apps, schema_editor):
     USERNAME = "guest@join.com"
     PASSWORD = "SuperSafeGuest123!"
     EMAIL = "guest@join.com"
+    FIRST_NAME = "Guest"
+    LAST_NAME = "User"
     user = get_user_model()
 
     if not user.objects.filter(username=USERNAME, email=EMAIL).exists():
@@ -17,7 +19,9 @@ def create_guest_user(apps, schema_editor):
         user = user.objects.create_user(
             username=USERNAME,
             password=PASSWORD,
-            email=EMAIL
+            email=EMAIL,
+            first_name=FIRST_NAME,
+            last_name=LAST_NAME
         )
         user.save()
     else:
