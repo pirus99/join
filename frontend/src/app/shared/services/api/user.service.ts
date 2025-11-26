@@ -116,7 +116,7 @@ export class UserService {
      * @returns {Promise<any>} Promise that resolves when guest login is successful
      */
     async loginGuest() {
-        const email = 'guest@join.de'
+        const email = 'guest@join.com'
         const password = 'SuperSafeGuest123!'
 
         await this.login(email, password)
